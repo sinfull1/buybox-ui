@@ -56,7 +56,7 @@ const summaryMetrics: SummaryMetric[] = [
     { title: "Response Progress for Risks", value: "56.2%" }
 ];
 
-const BuyBoxScore: React.FC<BuyBoxScoreProps> = ({ /*seller, product, location, score, price, rank */}) => {
+export default function BuyBoxScore ({ /*seller, product, location, score, price, rank */}) {
     return (
         <div className="grid grid-cols-2 gap-4 p-6">
             <Card className="col-span-2 text-center">
@@ -138,4 +138,4 @@ const BuyBoxScore: React.FC<BuyBoxScoreProps> = ({ /*seller, product, location, 
     );
 };
 
-export default BuyBoxScore;
+
