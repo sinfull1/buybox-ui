@@ -25,14 +25,7 @@ type SummaryMetric = {
     value: string;
 };
 
-type BuyBoxScoreProps = {
-    seller: string;
-    product: string;
-    location: string;
-    score: number;
-    price: number;
-    rank: number;
-};
+
 
 const riskData: RiskData[] = [
     { name: "Critical Risk", value: 3, color: "#ff4d4f" },

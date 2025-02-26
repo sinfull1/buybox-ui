@@ -15,19 +15,7 @@ export default function Page() {
     const [data, setData] = useState([
         { date: "18/06/24", seller: "Amazon", price: 100 },
     ]);
-    function findPriceRange(data: { prices: { price: never; }[]; }[]) {
-        let minPrice = Infinity;
-        let maxPrice = -Infinity;
 
-        data.forEach((entry: { prices: { price: never; }[]; }) => {
-            entry.prices.forEach(({ price }) => {
-                if (price < minPrice) minPrice = price;
-                if (price > maxPrice) maxPrice = price;
-            });
-        });
-
-        return { minPrice, maxPrice };
-    }
     const fetchOffers = async () => {
         try {
             const response = await fetch(`http://localhost:8080/buybox/offers/${selectedProduct}/${selectedLocation}`);
