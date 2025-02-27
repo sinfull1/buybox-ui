@@ -18,9 +18,11 @@ export default function Page() {
 
     const fetchOffers = async () => {
         try {
-            const response = await fetch(`http://localhost:8080/buybox/offers/${selectedProduct}/${selectedLocation}`);
-            const latestChartData = await response.json();
-            setData(latestChartData);
+            if (selectedProduct !== null && selectedLocation !== null  ) {
+                const response = await fetch(`http://localhost:8080/buybox/offers/${selectedProduct}/${selectedLocation}`);
+                const latestChartData = await response.json();
+                setData(latestChartData);
+            }
 
         } catch (error) {
             console.error("Error fetching offers:", error);

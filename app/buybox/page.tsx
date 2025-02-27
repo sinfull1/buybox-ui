@@ -27,7 +27,7 @@ export default function Page() {
 
     const fetchOffers = async () => {
         try {
-            const response = await fetch(`http://localhost:8080/events/winner/${selectedProduct}/${selectedLocation}`);
+            const response = await fetch(`http://localhost:8080/buybox/winner/${selectedProduct}/${selectedLocation}`);
             const data: BuyBoxOffer[] = await response.json();
             setOffers(data);
         } catch (error) {
