@@ -10,6 +10,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import Image from "next/image";
 
 // Menu items.
 const items = [
@@ -38,16 +39,23 @@ const items = [
 
 export function AppSidebar() {
     return (
-        <Sidebar>
-            <SidebarContent>
+        <Sidebar  className="mt-5">
+            <SidebarContent className="mt-5">
                 <SidebarGroup>
-                    <SidebarGroupLabel>Application</SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        <SidebarMenu>
+                    <SidebarGroupLabel className="mb-10">  <Image
+                        className="dark:invert"
+                        src="/tesco-large.png"
+                        alt="Tesco logo"
+                        width={180}
+                        height={38}
+                        priority
+                    /></SidebarGroupLabel>
+                    <SidebarGroupContent  >
+                        <SidebarMenu className="space-y-2 font-arial">
                             {items.map((item) => (
                                 <SidebarMenuItem key={item.title}>
                                     <SidebarMenuButton asChild>
-                                        <a href={item.url}>
+                                        <a href={item.url} className="font-arial">
                                             <item.icon />
                                             <span>{item.title}</span>
                                         </a>

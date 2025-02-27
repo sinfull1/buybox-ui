@@ -13,7 +13,7 @@ export default function Page() {
     const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
     const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
     const [data, setData] = useState([
-        { date: "18/06/24", seller: "Amazon", price: 100 },
+        { date: "1", seller: "1", price:0  },
     ]);
 
     const fetchOffers = async () => {
@@ -30,8 +30,8 @@ export default function Page() {
 
 
     return (
-        <div className="p-6">
-            <h1 className="text-xl font-bold">Offers</h1>
+        <div className="p-6 font-arial space-y-5">
+            <h1 className="text-xl font-bold">Pick Product and Location</h1>
             <div className="grid grid-cols-3 gap-4">
                 <Select onValueChange={(value) => setSelectedProduct(value)}>
                     <SelectTrigger><SelectValue placeholder="Select Product" /></SelectTrigger>
@@ -55,14 +55,11 @@ export default function Page() {
             <div className="border-b mb-4">
                 <nav className="flex space-x-4">
                     <button className="py-2 px-4 text-blue-600 border-b-2 border-blue-600">Price Monitor</button>
-                    <button className="py-2 px-4">Product Metrics</button>
-                    <button className="py-2 px-4">Brand Reputation</button>
-                    <button className="py-2 px-4">Content Analysis</button>
-                </nav>
+                   </nav>
             </div>
-            <div className="grid grid-cols-3 gap-4 mt-6">
-                <Card>
-                    <CardContent className="text-center">
+            <div className="grid grid-cols-3 gap-4">
+                <Card className="m-0">
+                    <CardContent className="text-center p-0">
                         <p className="text-lg font-bold">{sellerNames.length}</p>
                         <p>Sellers</p>
                     </CardContent>
