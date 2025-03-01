@@ -23,7 +23,7 @@ export default function Page() {
     };
 
     return (
-        <div className="p-6 max-w-xl mx-auto space-y-4">
+        <div className="p-6 mx-auto space-y-4">
             <h1 className="text-xl font-bold">Offers</h1>
             <div className="grid grid-cols-3 gap-4">
                 <Select onValueChange={(value) => setSelectedProduct(value)}>
@@ -46,7 +46,7 @@ export default function Page() {
 
             <Button onClick={fetchOffers}>Get Offers</Button>
 
-            <div className="space-y-2">
+            <div className="flex flex-row justify-evenly flex-wrap gap-4 p-4 bg-gray-100">
                 {offers.length > 0 ? (
                     offers.map((offer) => (
                         <Card key={offer.buyBoxOfferKey.effectiveAt}>
