@@ -34,3 +34,18 @@ export const locationNames: string []  = [
     "BOSTON_SHIPPING",
     "ATLANTA_STORAGE"
 ];
+
+export interface BuyBoxOfferKey {
+    productId: string;
+    sellerId: string;
+    locationId: string;
+    effectiveAt: string; // Using string to represent LocalDateTime
+    // Using number to represent BigDecimal
+}
+
+export interface BuyBoxOffer {
+    buyBoxOfferKey: BuyBoxOfferKey;
+    price: number;
+    lastUpdated: string; // Using string to represent LocalDateTime
+    tags: Record<string, string>;
+}

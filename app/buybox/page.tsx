@@ -4,22 +4,9 @@ import { useState } from "react";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { locationNames, productNames} from "../model";
+import { locationNames, productNames, BuyBoxOffer} from "../model";
 
-export interface BuyBoxOfferKey {
-    productId: string;
-    sellerId: string;
-    locationId: string;
-    effectiveAt: string; // Using string to represent LocalDateTime
-    // Using number to represent BigDecimal
-}
 
-export interface BuyBoxOffer {
-    buyBoxOfferKey: BuyBoxOfferKey;
-    price: number;
-    lastUpdated: string; // Using string to represent LocalDateTime
-    tags: Record<string, string>;
-}
 export default function Page() {
     const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
     const [selectedLocation, setSelectedLocation] = useState<string | null>(null);

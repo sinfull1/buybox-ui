@@ -4,22 +4,8 @@ import { useState } from "react";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {sellerNames, locationNames} from "../model";
+import { locationNames, sellerNames, BuyBoxOffer} from "../model";
 
-export interface BuyBoxOfferKey {
-    productId: string;
-    sellerId: string;
-    locationId: string;
-    effectiveAt: string; // Using string to represent LocalDateTime
-    // Using number to represent BigDecimal
-}
-
-export interface BuyBoxOffer {
-    buyBoxOfferKey: BuyBoxOfferKey;
-    price: number;
-    lastUpdated: string; // Using string to represent LocalDateTime
-    tags: Record<string, string>;
-}
 
 function uuidv4() {
     return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
