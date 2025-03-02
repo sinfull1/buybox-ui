@@ -1,12 +1,13 @@
 "use client"
 
-import React, {useState} from "react";
+import React, { useState} from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
-import {locationNames, productNames, sellerNames} from "@/app/model";
+//import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {  sellerNames} from "@/app/model";
 
+import SearchComponent from "@/app/product-dashboard/search";
 
 
 export default function Page() {
@@ -34,26 +35,13 @@ export default function Page() {
     return (
         <div className="p-6 font-arial space-y-5">
             <h1 className="text-xl font-bold">Pick Product and Location</h1>
-            <div className="grid grid-cols-3 gap-4">
-                <Select onValueChange={(value) => setSelectedProduct(value)}>
-                    <SelectTrigger><SelectValue placeholder="Select Product" /></SelectTrigger>
-                    <SelectContent>
-                        {productNames.map((product)=> (
-                            <SelectItem key={product} value={product}>{product}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <Select onValueChange={(value) => setSelectedLocation(value)}>
-                    <SelectTrigger><SelectValue placeholder="Select Location" /></SelectTrigger>
-                    <SelectContent>
-                        {locationNames.map((location)=> (
-                            <SelectItem  key={location} value={location}>{location}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <Button onClick={fetchOffers}>Get Prices</Button>
+            <div className="flex w-full items-center space-x-2">
+                <SearchComponent placeholder={"Search Products.."}  setter={setSelectedProduct} api={"product"}/>
+                <SearchComponent placeholder={"Search Locations.."} setter={setSelectedLocation} api={"location"}/>
+                <Button type="submit" onClick={fetchOffers}> Get Details</Button>
+
             </div>
-            <h2 className="text-2xl font-bold">{selectedProduct}</h2>
+
             <div className="border-b mb-4">
                 <nav className="flex space-x-4">
                     <button className="py-2 px-4 text-blue-600 border-b-2 border-blue-600">Price Monitor</button>
