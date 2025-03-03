@@ -1,6 +1,6 @@
 export default function BuyBoxLayout({
-                                       children,
-                                   }: {
+                                         children,
+                                     }: {
     children: React.ReactNode
 }) {
     return <section>{children}</section>

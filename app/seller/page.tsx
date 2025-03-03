@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { locationNames, sellerNames, BuyBoxOffer} from "../model";
+import React, {useState} from "react";
+import {Card, CardContent} from "@/components/ui/card";
+import {Button} from "@/components/ui/button";
+import {BuyBoxOffer} from "../model";
+import SearchComponent from "@/app/product-dashboard/search";
 
 
 function uuidv4() {
@@ -31,28 +31,14 @@ export default function Page() {
 
     return (
         <div className="p-6 mx-auto space-y-4">
-            <h1 className="text-xl font-bold">Offers</h1>
-            <div className="grid grid-cols-3 gap-4">
-                <Select onValueChange={(value) => setSelectedSeller(value)}>
-                    <SelectTrigger><SelectValue placeholder="Select Seller" /></SelectTrigger>
-                    <SelectContent>
-                        {sellerNames.map((seller)=> (
-                            <SelectItem  key={seller} value={seller}>{seller}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+            <h1 className="text-xl font-bold">Get Seller Catalogue</h1>
+            <div className="flex w-full items-center space-x-2">
+                <SearchComponent placeholder={"Search Seller.."} setter={setSelectedSeller} api={"seller"}/>
+                <SearchComponent placeholder={"Search Locations.."} setter={setSelectedLocation} api={"location"}/>
+                <Button type="submit" onClick={fetchOffers}>Get Offers</Button>
 
-                <Select onValueChange={(value) => setSelectedLocation(value)}>
-                    <SelectTrigger><SelectValue placeholder="Select Location" /></SelectTrigger>
-                    <SelectContent>
-                        {locationNames.map((location)=> (
-                            <SelectItem  key={location} value={location}>{location}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
             </div>
 
-            <Button onClick={fetchOffers}>Get Offers</Button>
 
             <div className="flex flex-row justify-evenly flex-wrap gap-4 p-4 bg-gray-100">
                 {offers.length > 0 ? (

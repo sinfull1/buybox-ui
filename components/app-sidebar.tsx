@@ -39,10 +39,10 @@ const items = [
 
 export function AppSidebar() {
     return (
-        <Sidebar  className="mt-5">
+        <Sidebar className="mt-5">
             <SidebarContent className="mt-5">
                 <SidebarGroup>
-                    <SidebarGroupLabel className="mb-10">  <Image
+                    <SidebarGroupLabel className="mb-10"> <Image
                         className="dark:invert"
                         src="/tesco-large.png"
                         alt="Tesco logo"
@@ -50,13 +50,13 @@ export function AppSidebar() {
                         height={38}
                         priority
                     /></SidebarGroupLabel>
-                    <SidebarGroupContent  >
+                    <SidebarGroupContent>
                         <SidebarMenu className="space-y-2 font-arial">
                             {items.map((item) => (
                                 <SidebarMenuItem key={item.title}>
                                     <SidebarMenuButton asChild>
                                         <a href={item.url} className="font-arial">
-                                            <item.icon />
+                                            <item.icon/>
                                             <span>{item.title}</span>
                                         </a>
                                     </SidebarMenuButton>

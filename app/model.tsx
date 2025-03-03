@@ -10,7 +10,7 @@ export const productNames: string [] = [
     "EXTERNAL_SSD",
     "GAMING_MOUSE"
 ];
-export const sellerNames : string [] = [
+export const sellerNames: string [] = [
     "TECH_WORLD",
     "GADGET_HUB",
     "ELECTRO_STORE",
@@ -22,7 +22,7 @@ export const sellerNames : string [] = [
     "FAST_BUY",
     "TRENDY_TECH"
 ];
-export const locationNames: string []  = [
+export const locationNames: string [] = [
     "NEW_YORK_WAREHOUSE",
     "LOS_ANGELES_HUB",
     "CHICAGO_DISTRIBUTION",

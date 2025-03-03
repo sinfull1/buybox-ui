@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { locationNames, productNames, BuyBoxOffer} from "../model";
+import React, {useState} from "react";
+import {Card, CardContent} from "@/components/ui/card";
+import {Button} from "@/components/ui/button";
+import {BuyBoxOffer} from "../model";
+import SearchComponent from "@/app/product-dashboard/search";
 
 
 export default function Page() {
@@ -23,29 +23,14 @@ export default function Page() {
     };
 
     return (
-        <div className="p-6 mx-auto space-y-4">
-            <h1 className="text-xl font-bold">Offers</h1>
-            <div className="grid grid-cols-3 gap-4">
-                <Select onValueChange={(value) => setSelectedProduct(value)}>
-                    <SelectTrigger><SelectValue placeholder="Select Product" /></SelectTrigger>
-                    <SelectContent>
-                        {productNames.map((product)=> (
-                                <SelectItem key={product} value={product}>{product}</SelectItem>
-                            ))}
-                    </SelectContent>
-                </Select>
-                <Select onValueChange={(value) => setSelectedLocation(value)}>
-                    <SelectTrigger><SelectValue placeholder="Select Location" /></SelectTrigger>
-                    <SelectContent>
-                        {locationNames.map((location)=> (
-                            <SelectItem  key={location} value={location}>{location}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+        <div className="p-6 w-full mx-auto space-y-4">
+            <h1 className="text-xl font-bold">Current Buybox Winner By Product & Location</h1>
+            <div className="flex w-full items-center space-x-2">
+                <SearchComponent placeholder={"Search Products.."} setter={setSelectedProduct} api={"product"}/>
+                <SearchComponent placeholder={"Search Locations.."} setter={setSelectedLocation} api={"location"}/>
+                <Button type="submit" onClick={fetchOffers}> Get Offers</Button>
+
             </div>
-
-            <Button onClick={fetchOffers}>Get Offers</Button>
-
             <div className="flex flex-row justify-evenly flex-wrap gap-4 p-4 bg-gray-100">
                 {offers.length > 0 ? (
                     offers.map((offer) => (

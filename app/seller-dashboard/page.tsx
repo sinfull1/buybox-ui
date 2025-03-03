@@ -3,7 +3,7 @@
 import React, {useEffect, useState} from "react";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Progress} from "@/components/ui/progress";
-import {PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer} from "recharts";
+import {Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis} from "recharts";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Search} from "lucide-react";
@@ -78,11 +78,11 @@ export default function BuyBoxScore({ /*seller, product, location, score, price,
         return () => clearTimeout(debounceTimeout);
     }, [query]);
 
-    const handleSearch = (e) => {
+    const handleSearch = (e: { target: { value: React.SetStateAction<string>; }; }) => {
         setQuery(e.target.value);
     };
 
-    const handleSelect = (item) => {
+    const handleSelect = (item: React.SetStateAction<string>) => {
         setQuery(item);
         setShowDropdown(false);
     };
