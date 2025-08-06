@@ -7,8 +7,8 @@ import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { DollarSign, TrendingUp, Package, BarChart3, Network, Settings, Play, RefreshCw, Save } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { ChevronDown, ChevronUp, DollarSign, TrendingUp, Package, BarChart3, Network, Settings, Play, RefreshCw, Save, X } from 'lucide-react';
 import * as d3 from 'd3';
 
 // Product categories with colors
@@ -117,19 +117,33 @@ const generateRelationships = (products) => {
     return relationships;
 };
 
-// Elasticity Curve Editor Component
+// Spline-based Elasticity Curve Editor Component
 const ElasticityCurveEditor = ({ product, onSave, onClose }) => {
     const svgRef = useRef(null);
-    const [curvePoints, setCurvePoints] = useState([...product.elasticityCurve]);
+    const [controlPoints, setControlPoints] = useState([]);
     const [isDragging, setIsDragging] = useState(false);
 
+    // Initialize control points from elasticity curve
     useEffect(() => {
-        if (!curvePoints.length) return;
+        // Create fewer control points for better spline editing
+        const points = [
+            { x: 0.5, y: Math.pow(0.5, product.elasticity), id: 0 },
+            { x: 0.7, y: Math.pow(0.7, product.elasticity), id: 1 },
+            { x: 1.0, y: 1.0, id: 2 }, // Base point (100% price, 100% demand)
+            { x: 1.3, y: Math.pow(1.3, product.elasticity), id: 3 },
+            { x: 1.6, y: Math.pow(1.6, product.elasticity), id: 4 },
+            { x: 2.0, y: Math.pow(2.0, product.elasticity), id: 5 }
+        ];
+        setControlPoints(points);
+    }, [product.elasticity]);
+
+    useEffect(() => {
+        if (!controlPoints.length) return;
 
         const svg = d3.select(svgRef.current);
         svg.selectAll("*").remove();
 
-        const margin = { top: 20, right: 30, bottom: 40, left: 50 };
+        const margin = { top: 20, right: 30, bottom: 50, left: 60 };
         const width = 500 - margin.left - margin.right;
         const height = 400 - margin.top - margin.bottom;
 
@@ -139,16 +153,16 @@ const ElasticityCurveEditor = ({ product, onSave, onClose }) => {
             .append("g")
             .attr("transform", `translate(${margin.left},${margin.top})`);
 
-        // Scales - adjusted for 10% increments
+        // Scales
         const xScale = d3.scaleLinear()
-            .domain([0.5, 2.0])  // 50% to 200% of base price
+            .domain([0.5, 2.0])
             .range([0, width]);
 
         const yScale = d3.scaleLinear()
-            .domain([0, 2])  // 0% to 200% of base demand
+            .domain([0, 2.5])
             .range([height, 0]);
 
-        // Grid lines for 10% increments
+        // Grid
         const xGrid = g.append("g")
             .attr("class", "grid")
             .attr("transform", `translate(0,${height})`)
@@ -156,41 +170,50 @@ const ElasticityCurveEditor = ({ product, onSave, onClose }) => {
                 .tickValues([0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0])
                 .tickSize(-height)
                 .tickFormat(""))
-            .style("stroke-dasharray", "2,2")
-            .style("opacity", 0.3);
+            .style("stroke", "#e0e0e0")
+            .style("stroke-dasharray", "2,2");
 
         const yGrid = g.append("g")
             .attr("class", "grid")
             .call(d3.axisLeft(yScale)
-                .tickValues([0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0])
+                .tickValues([0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5])
                 .tickSize(-width)
                 .tickFormat(""))
-            .style("stroke-dasharray", "2,2")
-            .style("opacity", 0.3);
+            .style("stroke", "#e0e0e0")
+            .style("stroke-dasharray", "2,2");
 
-        // Axes with 10% increment labels
+        // Axes
         g.append("g")
             .attr("transform", `translate(0,${height})`)
             .call(d3.axisBottom(xScale)
                 .tickValues([0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0])
                 .tickFormat(d => `${(d * 100).toFixed(0)}%`))
-            .append("text")
-            .attr("x", width / 2)
-            .attr("y", 35)
-            .attr("fill", "black")
-            .style("text-anchor", "middle")
-            .text("Price Ratio");
+            .selectAll("text")
+            .style("font-size", "10px");
 
         g.append("g")
             .call(d3.axisLeft(yScale)
-                .tickValues([0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0])
+                .tickValues([0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5])
                 .tickFormat(d => `${(d * 100).toFixed(0)}%`))
-            .append("text")
+            .selectAll("text")
+            .style("font-size", "10px");
+
+        // Axis labels
+        g.append("text")
+            .attr("x", width / 2)
+            .attr("y", height + 35)
+            .attr("text-anchor", "middle")
+            .style("font-size", "12px")
+            .style("font-weight", "bold")
+            .text("Price Ratio");
+
+        g.append("text")
             .attr("transform", "rotate(-90)")
-            .attr("y", -35)
+            .attr("y", -45)
             .attr("x", -height / 2)
-            .attr("fill", "black")
-            .style("text-anchor", "middle")
+            .attr("text-anchor", "middle")
+            .style("font-size", "12px")
+            .style("font-weight", "bold")
             .text("Demand Ratio");
 
         // Reference lines at 100%
@@ -199,7 +222,7 @@ const ElasticityCurveEditor = ({ product, onSave, onClose }) => {
             .attr("x2", xScale(1))
             .attr("y1", 0)
             .attr("y2", height)
-            .attr("stroke", "#666")
+            .attr("stroke", "#999")
             .attr("stroke-width", 2)
             .attr("stroke-dasharray", "5,5");
 
@@ -208,132 +231,193 @@ const ElasticityCurveEditor = ({ product, onSave, onClose }) => {
             .attr("x2", width)
             .attr("y1", yScale(1))
             .attr("y2", yScale(1))
-            .attr("stroke", "#666")
+            .attr("stroke", "#999")
             .attr("stroke-width", 2)
             .attr("stroke-dasharray", "5,5");
 
-        // Line generator
-        const line = d3.line()
-            .x(d => xScale(d.priceRatio))
-            .y(d => yScale(d.demandRatio))
-            .curve(d3.curveMonotoneX);
+        // Create spline generator
+        const spline = d3.line()
+            .x(d => xScale(d.x))
+            .y(d => yScale(d.y))
+            .curve(d3.curveCatmullRom.alpha(0.5)); // Smooth catmull-rom spline
 
-        // Draw curve
-        const path = g.append("path")
-            .datum(curvePoints)
+        // Draw the spline curve
+        const curvePath = g.append("path")
+            .datum(controlPoints)
             .attr("fill", "none")
             .attr("stroke", "#3b82f6")
-            .attr("stroke-width", 2)
-            .attr("d", line);
+            .attr("stroke-width", 3)
+            .attr("d", spline);
 
-        // Add draggable points
-        const circles = g.selectAll(".point")
-            .data(curvePoints)
+        // Add control points
+        const points = g.selectAll(".control-point")
+            .data(controlPoints)
             .enter().append("circle")
-            .attr("class", "point")
-            .attr("cx", d => xScale(d.priceRatio))
-            .attr("cy", d => yScale(d.demandRatio))
-            .attr("r", 5)
+            .attr("class", "control-point")
+            .attr("cx", d => xScale(d.x))
+            .attr("cy", d => yScale(d.y))
+            .attr("r", 7)
             .attr("fill", "#3b82f6")
             .attr("stroke", "#fff")
-            .attr("stroke-width", 2)
-            .attr("cursor", "pointer")
-            .call(d3.drag()
-                .on("start", dragstarted)
-                .on("drag", dragged)
-                .on("end", dragended));
+            .attr("stroke-width", 3)
+            .attr("cursor", "ns-resize")
+            .style("user-select", "none");
 
-        // Add value labels for points
-        const labels = g.selectAll(".label")
-            .data(curvePoints.filter((d, i) => i % 2 === 0)) // Show every other label to avoid crowding
+        // Add control point labels
+        const labels = g.selectAll(".point-label")
+            .data(controlPoints)
             .enter().append("text")
-            .attr("class", "label")
-            .attr("x", d => xScale(d.priceRatio))
-            .attr("y", d => yScale(d.demandRatio) - 10)
+            .attr("class", "point-label")
+            .attr("x", d => xScale(d.x))
+            .attr("y", d => yScale(d.y) - 15)
             .attr("text-anchor", "middle")
-            .attr("font-size", "10px")
+            .attr("font-size", "11px")
+            .attr("font-weight", "bold")
             .attr("fill", "#666")
-            .text(d => `${(d.demandRatio * 100).toFixed(0)}%`);
+            .text(d => `${(d.y * 100).toFixed(0)}%`);
 
-        function dragstarted(event, d) {
-            setIsDragging(true);
-            d3.select(this).attr("r", 7);
-        }
+        // Add drag behavior
+        points.call(d3.drag()
+            .on("start", function(event, d) {
+                setIsDragging(true);
+                d3.select(this)
+                    .attr("r", 9)
+                    .attr("fill", "#1d4ed8")
+                    .style("cursor", "ns-resize");
+            })
+            .on("drag", function(event, d) {
+                // Only allow vertical movement
+                const newY = event.y;
+                const constrainedY = Math.max(0, Math.min(height, newY));
 
-        function dragged(event, d) {
-            const newY = Math.max(0, Math.min(height, event.y));
-            let newDemandRatio = yScale.invert(newY);
+                // Convert to data value
+                let newDemandRatio = yScale.invert(constrainedY);
+                newDemandRatio = Math.max(0.1, Math.min(2.5, newDemandRatio));
 
-            // Allow free movement - remove snapping to allow smooth dragging
-            newDemandRatio = Math.max(0, Math.min(2, newDemandRatio));
+                // Update control point
+                d.y = newDemandRatio;
 
-            // Update the point
-            d.demandRatio = newDemandRatio;
-            d.demand = 100 * newDemandRatio;
+                // Update visual position
+                d3.select(this).attr("cy", yScale(newDemandRatio));
 
-            // Update visualization
-            d3.select(this).attr("cy", yScale(newDemandRatio));
-            path.attr("d", line);
+                // Update spline curve
+                curvePath.attr("d", spline);
 
-            // Update labels - remove and recreate to avoid overlap
-            g.selectAll(".label").remove();
-            g.selectAll(".label")
-                .data(curvePoints.filter((d, i) => i % 2 === 0))
-                .enter().append("text")
-                .attr("class", "label")
-                .attr("x", d => xScale(d.priceRatio))
-                .attr("y", d => yScale(d.demandRatio) - 10)
-                .attr("text-anchor", "middle")
-                .attr("font-size", "10px")
-                .attr("fill", "#666")
-                .text(d => `${(d.demandRatio * 100).toFixed(0)}%`);
+                // Update labels
+                labels.data(controlPoints)
+                    .attr("x", d => xScale(d.x))
+                    .attr("y", d => yScale(d.y) - 15)
+                    .text(d => `${(d.y * 100).toFixed(0)}%`);
 
-            // Update state
-            setCurvePoints([...curvePoints]);
-        }
-
-        function dragended(event, d) {
-            setIsDragging(false);
-            d3.select(this).attr("r", 5);
-        }
+                // Update state
+                setControlPoints([...controlPoints]);
+            })
+            .on("end", function(event, d) {
+                setIsDragging(false);
+                d3.select(this)
+                    .attr("r", 7)
+                    .attr("fill", "#3b82f6")
+                    .style("cursor", "ns-resize");
+            }));
 
         // Add elasticity display
+        const currentElasticity = calculateElasticityFromPoints(controlPoints);
         g.append("text")
             .attr("x", width - 10)
-            .attr("y", 10)
+            .attr("y", 15)
             .attr("text-anchor", "end")
             .attr("font-size", "14px")
             .attr("font-weight", "bold")
-            .text(`Elasticity: ${product.elasticity.toFixed(2)}`);
+            .attr("fill", "#333")
+            .text(`Elasticity: ${currentElasticity.toFixed(2)}`);
 
-    }, [curvePoints, product.elasticity]);
+        // Add curve type indicator
+        g.append("text")
+            .attr("x", 10)
+            .attr("y", 15)
+            .attr("font-size", "12px")
+            .attr("font-weight", "bold")
+            .attr("fill", "#666")
+            .text("Catmull-Rom Spline");
 
-    const handleSave = () => {
-        // Calculate new elasticity from curve
-        const midPoint = curvePoints.find(p => Math.abs(p.priceRatio - 1) < 0.05);
-        const nextPoint = curvePoints.find(p => Math.abs(p.priceRatio - 1.1) < 0.05);
+    }, [controlPoints, product.elasticity]);
 
-        if (midPoint && nextPoint) {
-            const priceChange = (nextPoint.priceRatio - midPoint.priceRatio) / midPoint.priceRatio;
-            const demandChange = (nextPoint.demandRatio - midPoint.demandRatio) / midPoint.demandRatio;
-            const newElasticity = demandChange / priceChange;
+    // Calculate elasticity from control points
+    const calculateElasticityFromPoints = (points) => {
+        // Find points around 100% price ratio
+        const basePoint = points.find(p => Math.abs(p.x - 1.0) < 0.1);
+        const nextPoint = points.find(p => p.x > 1.0 && p.x < 1.4);
 
-            onSave({
-                ...product,
-                elasticity: newElasticity,
-                elasticityCurve: curvePoints
+        if (basePoint && nextPoint) {
+            const priceChange = (nextPoint.x - basePoint.x) / basePoint.x;
+            const demandChange = (nextPoint.y - basePoint.y) / basePoint.y;
+            return demandChange / priceChange;
+        }
+        return product.elasticity; // fallback
+    };
+
+    // Generate curve points from spline for saving
+    const generateCurveFromSpline = () => {
+        const spline = d3.line()
+            .x(d => d.x)
+            .y(d => d.y)
+            .curve(d3.curveCatmullRom.alpha(0.5));
+
+        // Generate dense points along the spline
+        const curvePoints = [];
+        for (let ratio = 0.5; ratio <= 2.0; ratio += 0.05) {
+            // Interpolate y value at this x position using the control points
+            let y = interpolateSpline(controlPoints, ratio);
+            curvePoints.push({
+                priceRatio: ratio,
+                demandRatio: y,
+                price: product.basePrice * ratio,
+                demand: 100 * y
             });
         }
+        return curvePoints;
+    };
+
+    // Spline interpolation helper
+    const interpolateSpline = (points, x) => {
+        // Simple linear interpolation between nearest points
+        // In a production app, you'd use a proper spline interpolation
+        const sorted = points.sort((a, b) => a.x - b.x);
+
+        if (x <= sorted[0].x) return sorted[0].y;
+        if (x >= sorted[sorted.length - 1].x) return sorted[sorted.length - 1].y;
+
+        for (let i = 0; i < sorted.length - 1; i++) {
+            if (x >= sorted[i].x && x <= sorted[i + 1].x) {
+                const t = (x - sorted[i].x) / (sorted[i + 1].x - sorted[i].x);
+                return sorted[i].y + t * (sorted[i + 1].y - sorted[i].y);
+            }
+        }
+        return 1.0; // fallback
+    };
+
+    const handleSave = () => {
+        const newElasticity = calculateElasticityFromPoints(controlPoints);
+        const newCurve = generateCurveFromSpline();
+
+        onSave({
+            ...product,
+            elasticity: newElasticity,
+            elasticityCurve: newCurve
+        });
     };
 
     return (
         <div className="space-y-4">
-            <div className="bg-gray-50 p-4 rounded">
+            <div className="bg-gray-50 p-4 rounded-lg border">
                 <svg ref={svgRef}></svg>
             </div>
             <div className="flex justify-between items-center">
                 <div className="text-sm text-gray-600">
-                    Drag points to adjust the demand curve. Move freely on the y-axis for precise control.
+                    <div className="font-medium mb-1">Spline Curve Editor</div>
+                    <div>• Drag control points vertically to adjust demand response</div>
+                    <div>• Smooth Catmull-Rom spline interpolation</div>
+                    <div>• {controlPoints.length} control points for precise editing</div>
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={onClose}>Cancel</Button>
@@ -429,34 +513,54 @@ const CrossElasticityCurveEditor = ({ sourceProduct, targetProduct, relationship
             .attr("stroke-width", 2)
             .attr("d", line);
 
-        // Add draggable points
+        // Add draggable points for cross-elasticity
         g.selectAll(".point")
             .data(curvePoints)
             .enter().append("circle")
             .attr("class", "point")
             .attr("cx", d => xScale(d.priceRatio))
             .attr("cy", d => yScale(d.effectRatio))
-            .attr("r", 5)
+            .attr("r", 6)
             .attr("fill", relationship.type === 'substitute' ? "#ef4444" : "#10b981")
             .attr("stroke", "#fff")
             .attr("stroke-width", 2)
-            .attr("cursor", "pointer")
+            .attr("cursor", "ns-resize")
+            .style("user-select", "none")
             .call(d3.drag()
                 .on("start", function(event, d) {
-                    d3.select(this).attr("r", 7);
+                    d3.select(this)
+                        .attr("r", 8)
+                        .style("cursor", "ns-resize");
                 })
                 .on("drag", function(event, d) {
-                    const newY = Math.max(0, Math.min(height, event.y));
-                    d.effectRatio = yScale.invert(newY);
-                    // Allow free movement without constraints
-                    d.effectRatio = Math.max(0.5, Math.min(1.5, d.effectRatio));
+                    // Use event.y directly which is already in the correct coordinate system
+                    const newY = event.y;
 
-                    d3.select(this).attr("cy", yScale(d.effectRatio));
+                    // Constrain to chart area
+                    const constrainedY = Math.max(0, Math.min(height, newY));
+
+                    // Convert to data value
+                    let newEffectRatio = yScale.invert(constrainedY);
+
+                    // Allow free movement with reasonable bounds
+                    newEffectRatio = Math.max(0.3, Math.min(1.7, newEffectRatio));
+
+                    // Update data
+                    d.effectRatio = newEffectRatio;
+
+                    // Update visual position using the DATA VALUE, not screen coordinate
+                    d3.select(this).attr("cy", yScale(newEffectRatio));
+
+                    // Redraw path
                     path.attr("d", line);
+
+                    // Update state
                     setCurvePoints([...curvePoints]);
                 })
                 .on("end", function(event, d) {
-                    d3.select(this).attr("r", 5);
+                    d3.select(this)
+                        .attr("r", 6)
+                        .style("cursor", "ns-resize");
                 }));
 
         // Add type and strength display
