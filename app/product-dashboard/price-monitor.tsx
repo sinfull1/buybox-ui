@@ -13,6 +13,7 @@ export interface PriceMonitorProps {
 
 export default function PriceMonitor(props: PriceMonitorProps) {
 
+
     return (<>
         <div className="grid grid-cols-3 gap-4">
             <Card className="m-0">
@@ -40,7 +41,7 @@ export default function PriceMonitor(props: PriceMonitorProps) {
                 <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={props.data}>
                         <XAxis dataKey="date"/>
-                        <YAxis domain={[props.summary?.minPrice, props.summary?.maxPrice]}/>
+                        <YAxis domain={[0, 3]}/>
                         <Tooltip/>
                         <Legend/>
                         {props.summary?.sellerList.map((seller: never, index: number) => (

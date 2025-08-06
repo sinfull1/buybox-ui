@@ -5,6 +5,7 @@ import {Card, CardContent} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {BuyBoxOffer} from "../model";
 import SearchComponent from "@/app/product-dashboard/search";
+import PricingSensitivityVisualization from "@/app/buybox/price-els";
 
 
 export default function Page() {
@@ -30,6 +31,9 @@ export default function Page() {
                 <SearchComponent placeholder={"Search Locations.."} setter={setSelectedLocation} api={"location"}/>
                 <Button type="submit" onClick={fetchOffers}> Get Offers</Button>
 
+            </div>
+            <div className="flex flex-row justify-evenly flex-wrap gap-4 p-4 bg-gray-100">
+                <PricingSensitivityVisualization/>
             </div>
             <div className="flex flex-row justify-evenly flex-wrap gap-4 p-4 bg-gray-100">
                 {offers.length > 0 ? (
