@@ -286,9 +286,13 @@ const ElasticityCurveEditor = ({ product, onSave, onClose }) => {
                     .style("cursor", "ns-resize");
             })
             .on("drag", function(event, d) {
-                // Only allow vertical movement
-                const newY = event.y;
-                const constrainedY = Math.max(0, Math.min(height, newY));
+                // Get mouse position relative to the SVG element, not the page
+                const svgElement = svg.node();
+                const rect = svgElement.getBoundingClientRect();
+                const mouseY = event.sourceEvent.clientY - rect.top - margin.top;
+
+                // Constrain to chart area
+                const constrainedY = Math.max(0, Math.min(height, mouseY));
 
                 // Convert to data value
                 let newDemandRatio = yScale.invert(constrainedY);
@@ -534,7 +538,7 @@ const CrossElasticityCurveEditor = ({ sourceProduct, targetProduct, relationship
                 })
                 .on("drag", function(event, d) {
                     // Use event.y directly which is already in the correct coordinate system
-                    const newY = event.y;
+                    const newY = event.y - 450;
 
                     // Constrain to chart area
                     const constrainedY = Math.max(0, Math.min(height, newY));
