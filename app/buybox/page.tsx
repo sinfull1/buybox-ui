@@ -6,6 +6,7 @@ import {Button} from "@/components/ui/button";
 import {BuyBoxOffer} from "../model";
 import SearchComponent from "@/app/product-dashboard/search";
 import PricingSensitivityVisualization from "@/app/buybox/price-els";
+import EvolveGCNPlatform from "@/app/buybox/price-elasticity2";
 
 
 export default function Page() {
@@ -33,7 +34,7 @@ export default function Page() {
 
             </div>
             <div className="flex flex-row justify-evenly flex-wrap gap-4 p-4 bg-gray-100">
-                <PricingSensitivityVisualization/>
+                <EvolveGCNPlatform/>
             </div>
             <div className="flex flex-row justify-evenly flex-wrap gap-4 p-4 bg-gray-100">
                 {offers.length > 0 ? (
