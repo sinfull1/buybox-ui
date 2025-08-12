@@ -1,4 +1,3 @@
-"use client"
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import * as d3 from 'd3';
 import {
@@ -48,7 +47,7 @@ const useTraining = () => {
             const endTime = Date.now();
             setTrainingSpeed(1000 / (endTime - startTime));
 
-            await new Promise(resolve => setTimeout(resolve, Math.random() * 100 + 50));
+            await new Promise(resolve => setTimeout(resolve, Math.random() * 50 + 20));
         }
 
         setIsTraining(false);
@@ -62,15 +61,17 @@ const useOptimization = () => {
     const [optimizationHistory, setOptimizationHistory] = useState([]);
     const [currentSolution, setCurrentSolution] = useState(null);
     const [convergenceMetrics, setConvergenceMetrics] = useState(null);
+    // **NEW:** Ref to handle stopping the optimization
+    const stopOptimizationRef = useRef(false);
 
-    const startOptimization = useCallback(async (products, elasticityMatrix, constraints) => {
+    const startOptimization = useCallback(async (products, elasticityMatrix, constraints, objective = 'profit') => {
         setIsOptimizing(true);
         setOptimizationHistory([]);
         setConvergenceMetrics(null);
+        stopOptimizationRef.current = false; // Reset stop flag
 
         const { maxPriceChange } = constraints;
 
-        // Adam Optimizer Implementation
         const alpha = 0.05;
         const beta1 = 0.9;
         const beta2 = 0.999;
@@ -85,23 +86,31 @@ const useOptimization = () => {
         let bestPrices = [...currentPrices];
         const maxIterations = 200;
 
-        const calculateTotalProfit = (prices) => {
+        const calculateObjectiveValue = (prices, obj) => {
             const testProducts = products.map((p, i) => ({ ...p, currentPrice: prices[i] }));
+
+            if (obj === 'revenue') {
+                return products.reduce((totalRevenue, product, i) => {
+                    const demand = MathUtils.calculateDemand({ ...product, currentPrice: prices[i] }, testProducts, elasticityMatrix);
+                    return totalRevenue + prices[i] * demand;
+                }, 0);
+            }
+
             return products.reduce((totalProfit, product, i) => {
-                const demand = MathUtils.calculateDemand(
-                    { ...product, currentPrice: prices[i] },
-                    testProducts,
-                    elasticityMatrix
-                );
+                const demand = MathUtils.calculateDemand({ ...product, currentPrice: prices[i] }, testProducts, elasticityMatrix);
                 const profit = (prices[i] - product.cost) * demand;
                 return totalProfit + profit;
             }, 0);
         };
 
-        const initialProfit = calculateTotalProfit(currentPrices);
-        let currentProfit = initialProfit;
+        let currentObjectiveValue = calculateObjectiveValue(currentPrices, objective);
 
         while (t < maxIterations) {
+            // **NEW:** Check if stop has been requested
+            if (stopOptimizationRef.current) {
+                setConvergenceMetrics({ converged: false, iterations: t, reason: 'Stopped by user.' });
+                break;
+            }
             t++;
 
             const gradients = [];
@@ -110,13 +119,13 @@ const useOptimization = () => {
             for (let i = 0; i < products.length; i++) {
                 const pricesUp = [...currentPrices];
                 pricesUp[i] += grad_epsilon;
-                const profitUp = calculateTotalProfit(pricesUp);
+                const objectiveUp = calculateObjectiveValue(pricesUp, objective);
 
                 const pricesDown = [...currentPrices];
                 pricesDown[i] -= grad_epsilon;
-                const profitDown = calculateTotalProfit(pricesDown);
+                const objectiveDown = calculateObjectiveValue(pricesDown, objective);
 
-                const gradient = (profitUp - profitDown) / (2 * grad_epsilon);
+                const gradient = (objectiveUp - objectiveDown) / (2 * grad_epsilon);
                 gradients.push(gradient);
             }
 
@@ -130,7 +139,6 @@ const useOptimization = () => {
                 const update = alpha * m_hat[i] / (Math.sqrt(v_hat[i]) + epsilon);
                 let newPrice = price + update;
 
-                // **FIX:** Correctly apply the price change constraint
                 const minPrice = products[i].cost * 1.05;
                 const maxPriceLimit = products[i].basePrice * (1 + maxPriceChange / 100);
                 const minPriceLimit = products[i].basePrice * (1 - maxPriceChange / 100);
@@ -140,67 +148,64 @@ const useOptimization = () => {
                 return newPrice;
             });
 
-            const newProfit = calculateTotalProfit(newPrices);
+            const newObjectiveValue = calculateObjectiveValue(newPrices, objective);
             const gradientNorm = Math.sqrt(gradients.reduce((sum, g) => sum + g * g, 0));
 
             setOptimizationHistory(prev => [...prev, {
                 iteration: t,
-                objective: newProfit,
+                objective: newObjectiveValue,
                 gradient_norm: gradientNorm,
-                step_size: alpha,
-                profit_improvement: newProfit - initialProfit
             }]);
 
-            if (newProfit > bestObjective) {
-                bestObjective = newProfit;
+            if (newObjectiveValue > bestObjective) {
+                bestObjective = newObjectiveValue;
                 bestPrices = [...newPrices];
 
                 setCurrentSolution({
                     prices: [...newPrices],
                     expectedRevenue: products.reduce((sum, p, i) => {
-                        const demand = MathUtils.calculateDemand(
-                            { ...p, currentPrice: newPrices[i] },
-                            products.map((prod, j) => ({ ...prod, currentPrice: newPrices[j] })),
-                            elasticityMatrix
-                        );
+                        const demand = MathUtils.calculateDemand({ ...p, currentPrice: newPrices[i] }, products.map((prod, j) => ({ ...prod, currentPrice: newPrices[j] })), elasticityMatrix);
                         return sum + newPrices[i] * demand;
                     }, 0),
-                    totalProfit: newProfit,
+                    totalProfit: products.reduce((sum, p, i) => {
+                        const demand = MathUtils.calculateDemand({ ...p, currentPrice: newPrices[i] }, products.map((prod, j) => ({ ...prod, currentPrice: newPrices[j] })), elasticityMatrix);
+                        return sum + (newPrices[i] - p.cost) * demand;
+                    }, 0),
                     priceChanges: newPrices.map((price, i) => (price - products[i].basePrice) / products[i].basePrice)
                 });
             }
 
-            if (gradientNorm < 1e-3 || Math.abs(newProfit - currentProfit) < 1e-2) {
-                setConvergenceMetrics({
-                    converged: true,
-                    iterations: t,
-                    final_gradient: gradientNorm,
-                    objective_improvement: bestObjective - initialProfit,
-                    final_profit: bestObjective
-                });
+            if (gradientNorm < 0.5 || Math.abs(newObjectiveValue - currentObjectiveValue) < 1) {
+                setConvergenceMetrics({ converged: true, iterations: t, reason: 'Convergence criteria met.' });
                 break;
             }
 
             currentPrices = newPrices;
-            currentProfit = newProfit;
+            currentObjectiveValue = newObjectiveValue;
 
             await new Promise(resolve => setTimeout(resolve, 30));
         }
 
         if (t >= maxIterations) {
-            setConvergenceMetrics({
-                converged: false,
-                iterations: t,
-                final_gradient: -1,
-                objective_improvement: bestObjective - initialProfit,
-                final_profit: bestObjective
-            });
+            setConvergenceMetrics({ converged: false, iterations: t, reason: 'Max iterations reached.' });
         }
 
         setIsOptimizing(false);
     }, []);
 
-    return { isOptimizing, optimizationHistory, currentSolution, convergenceMetrics, startOptimization };
+    // **NEW:** Function to stop the optimization
+    const stopOptimization = useCallback(() => {
+        stopOptimizationRef.current = true;
+    }, []);
+
+    // **NEW:** Function to reset the state
+    const resetOptimization = useCallback(() => {
+        setOptimizationHistory([]);
+        setCurrentSolution(null);
+        setConvergenceMetrics(null);
+    }, []);
+
+    return { isOptimizing, optimizationHistory, currentSolution, convergenceMetrics, startOptimization, stopOptimization, resetOptimization };
 };
 
 
@@ -311,8 +316,8 @@ const useDataImport = () => {
             for (let i = 1; i < lines.length; i++) {
                 const values = lines[i].split(',');
                 const product = {
-                    id: i - 1,
-                    name: values[headers.indexOf('name')] || `Product ${i}`,
+                    id: products.length, // Ensure unique ID
+                    name: values[headers.indexOf('name')] || `Product ${products.length + 1}`,
                     category: values[headers.indexOf('category')] || 'General',
                     basePrice: parseFloat(values[headers.indexOf('baseprice')] || values[headers.indexOf('price')]) || 50,
                     currentPrice: parseFloat(values[headers.indexOf('currentprice')] || values[headers.indexOf('price')]) || 50,
@@ -650,7 +655,7 @@ const generateSampleData = () => {
     const categories = ['Electronics', 'Clothing', 'Books', 'Home & Garden', 'Sports', 'Beauty', 'Automotive', 'Health', 'Toys', 'Office'];
     const products = [];
 
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 200; i++) {
         const basePrice = 10 + Math.random() * 490;
         const marginPercent = -10 + Math.random() * 35;
         const cost = basePrice * (1 - marginPercent / 100);
@@ -670,8 +675,8 @@ const generateSampleData = () => {
     return products;
 };
 
-// **NEW:** D3 Network Visualization Component
-const D3Network = ({ products, elasticityMatrix, theme }) => {
+// **NEW:** D3 component with zoom and click handler
+const D3Network = ({ products, elasticityMatrix, theme, onNodeClick }) => {
     const svgRef = useRef();
     const [nodes, setNodes] = useState([]);
     const [links, setLinks] = useState([]);
@@ -686,7 +691,7 @@ const D3Network = ({ products, elasticityMatrix, theme }) => {
                 const p1 = products[i];
                 const p2 = products[j];
                 const elasticity = elasticityMatrix[p1.id]?.[p2.id] || 0;
-                if (Math.abs(elasticity) > 0.1) { // Threshold to draw a link
+                if (Math.abs(elasticity) > 0.1) {
                     newLinks.push({
                         source: p1.id,
                         target: p2.id,
@@ -704,28 +709,38 @@ const D3Network = ({ products, elasticityMatrix, theme }) => {
         if (nodes.length === 0 || links.length === 0) return;
 
         const width = 800;
-        const height = 400;
+        const height = 600;
 
         const svg = d3.select(svgRef.current)
             .attr('width', '100%')
             .attr('height', '100%')
             .attr('viewBox', `0 0 ${width} ${height}`);
 
-        svg.selectAll("*").remove(); // Clear previous render
+        svg.selectAll("*").remove();
+
+        const container = svg.append("g");
+
+        // **NEW:** Add zoom functionality
+        const zoom = d3.zoom()
+            .scaleExtent([0.1, 4])
+            .on("zoom", (event) => {
+                container.attr("transform", event.transform);
+            });
+        svg.call(zoom);
 
         const simulation = d3.forceSimulation(nodes)
             .force('link', d3.forceLink(links).id(d => d.id).distance(d => 150 - d.value * 50))
             .force('charge', d3.forceManyBody().strength(-150))
             .force('center', d3.forceCenter(width / 2, height / 2));
 
-        const link = svg.append('g')
+        const link = container.append('g')
             .selectAll('line')
             .data(links)
             .enter().append('line')
             .style('stroke', d => d.type === 'substitute' ? '#ef4444' : '#10b981')
             .style('stroke-width', d => d.value * 3);
 
-        const node = svg.append('g')
+        const node = container.append('g')
             .selectAll('circle')
             .data(nodes)
             .enter().append('circle')
@@ -733,20 +748,12 @@ const D3Network = ({ products, elasticityMatrix, theme }) => {
             .style('fill', '#6366f1')
             .style('stroke', theme === 'dark' ? '#fff' : '#333')
             .style('stroke-width', 1.5)
+            .style('cursor', 'pointer')
+            .on("click", (event, d) => onNodeClick(d)) // **NEW:** Click handler
             .call(d3.drag()
                 .on("start", dragstarted)
                 .on("drag", dragged)
                 .on("end", dragended));
-
-        const label = svg.append("g")
-            .selectAll("text")
-            .data(nodes)
-            .enter().append("text")
-            .text(d => d.name)
-            .attr('x', 10)
-            .attr('y', 5)
-            .style('font-size', '10px')
-            .style('fill', theme === 'dark' ? '#fff' : '#000');
 
         node.append("title").text(d => `${d.name}\nCategory: ${d.category}\nPrice: $${d.basePrice}`);
 
@@ -760,9 +767,6 @@ const D3Network = ({ products, elasticityMatrix, theme }) => {
             node
                 .attr('cx', d => d.x)
                 .attr('cy', d => d.y);
-
-            label
-                .attr("transform", d => `translate(${d.x},${d.y})`);
         });
 
         function dragstarted(event, d) {
@@ -782,7 +786,7 @@ const D3Network = ({ products, elasticityMatrix, theme }) => {
             d.fy = null;
         }
 
-    }, [nodes, links, theme]);
+    }, [nodes, links, theme, onNodeClick]);
 
     return <svg ref={svgRef}></svg>;
 };
@@ -793,12 +797,15 @@ const EvolveGCNPlatform = () => {
     const [products, setProducts] = useState(generateSampleData());
     const [elasticityMatrix, setElasticityMatrix] = useState({});
     const [optimizationConstraints, setOptimizationConstraints] = useState({ maxPriceChange: 30 });
+    const [optimizationObjective, setOptimizationObjective] = useState('profit');
     const [trainingConfig, setTrainingConfig] = useState({
         epochs: 100,
         learningRate: 0.001,
         hiddenDim: 64,
         graphMethod: 'hybrid'
     });
+    // **NEW:** State for selected node in D3 graph
+    const [selectedNode, setSelectedNode] = useState(null);
 
     const training = useTraining();
     const optimization = useOptimization();
@@ -834,9 +841,9 @@ const EvolveGCNPlatform = () => {
             notifications.addNotification('Please train the EvolveGCN model first to extract elasticities', 'error');
             return;
         }
-        optimization.startOptimization(products, elasticityMatrix, optimizationConstraints);
-        notifications.addNotification('Price optimization started using learned elasticities', 'success');
-    }, [products, optimization, notifications, elasticityMatrix, optimizationConstraints]);
+        optimization.startOptimization(products, elasticityMatrix, optimizationConstraints, optimizationObjective);
+        notifications.addNotification(`Price optimization started for ${optimizationObjective} maximization`, 'success');
+    }, [products, optimization, notifications, elasticityMatrix, optimizationConstraints, optimizationObjective]);
 
     const graphMetrics = useMemo(() => {
         const adjacencyMatrix = MathUtils.buildProductGraph(products);
@@ -849,30 +856,11 @@ const EvolveGCNPlatform = () => {
     const performanceMetrics = useMemo(() => {
         if (!optimization.currentSolution) return null;
 
-        const totalRevenue = products.reduce((sum, product, i) => {
-            const price = optimization.currentSolution.prices[i];
-            const demand = MathUtils.calculateDemand(
-                {...product, currentPrice: price},
-                products.map((p, j) => ({...p, currentPrice: optimization.currentSolution.prices[j]})),
-                elasticityMatrix
-            );
-            return sum + price * demand;
-        }, 0);
+        const { totalRevenue, totalProfit } = optimization.currentSolution;
+        const margin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
-        const totalCost = products.reduce((sum, product, i) => {
-            const price = optimization.currentSolution.prices[i];
-            const demand = MathUtils.calculateDemand(
-                {...product, currentPrice: price},
-                products.map((p, j) => ({...p, currentPrice: optimization.currentSolution.prices[j]})),
-                elasticityMatrix
-            );
-            return sum + product.cost * demand;
-        }, 0);
-        const profit = totalRevenue - totalCost;
-        const margin = totalRevenue > 0 ? (profit / totalRevenue) * 100 : 0;
-
-        return { totalRevenue, totalCost, profit, margin };
-    }, [optimization.currentSolution, products, elasticityMatrix]);
+        return { totalRevenue, totalProfit, margin };
+    }, [optimization.currentSolution]);
 
     const themeClasses = {
         dark: {
@@ -974,22 +962,19 @@ const EvolveGCNPlatform = () => {
                                     Generate New Sample Data
                                 </button>
                             </div>
-                            <div className="overflow-x-auto">
+                            <div className="overflow-x-auto h-96">
                                 <table className="min-w-full">
                                     <thead>
-                                    <tr className="border-b border-gray-600">
+                                    <tr className="border-b border-gray-600 sticky top-0 bg-slate-900/50 backdrop-blur-sm">
                                         <th className={`text-left py-3 px-4 ${currentTheme.text}`}>Product Name</th>
                                         <th className={`text-left py-3 px-4 ${currentTheme.text}`}>Category</th>
                                         <th className={`text-left py-3 px-4 ${currentTheme.text}`}>Base Price</th>
-                                        <th className={`text-left py-3 px-4 ${currentTheme.text}`}>Current Price</th>
-                                        <th className={`text-left py-3 px-4 ${currentTheme.text}`}>Base Demand</th>
                                         <th className={`text-left py-3 px-4 ${currentTheme.text}`}>Cost</th>
                                         <th className={`text-left py-3 px-4 ${currentTheme.text}`}>Margin</th>
-                                        <th className={`text-left py-3 px-4 ${currentTheme.text}`}>Inventory</th>
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    {products.slice(0, 10).map((product) => {
+                                    {products.map((product) => {
                                         const margin = ((product.basePrice - product.cost) / product.basePrice * 100);
                                         return (
                                             <tr key={product.id} className="border-b border-gray-700 hover:bg-white/5">
@@ -1000,13 +985,10 @@ const EvolveGCNPlatform = () => {
                             </span>
                                                 </td>
                                                 <td className={`py-3 px-4 ${currentTheme.text}`}>${product.basePrice.toFixed(2)}</td>
-                                                <td className={`py-3 px-4 ${currentTheme.text}`}>${product.currentPrice.toFixed(2)}</td>
-                                                <td className={`py-3 px-4 ${currentTheme.text}`}>{Math.round(product.baseDemand)}</td>
                                                 <td className={`py-3 px-4 ${currentTheme.text}`}>${product.cost.toFixed(2)}</td>
                                                 <td className={`py-3 px-4 ${margin >= 20 ? 'text-green-400' : margin >= 10 ? 'text-yellow-400' : 'text-red-400'}`}>
                                                     {margin.toFixed(1)}%
                                                 </td>
-                                                <td className={`py-3 px-4 ${currentTheme.text}`}>{product.inventory}</td>
                                             </tr>
                                         );
                                     })}
@@ -1014,72 +996,6 @@ const EvolveGCNPlatform = () => {
                                 </table>
                             </div>
                         </div>
-
-                        <div className={`${currentTheme.cardBg} rounded-xl p-6 shadow-xl`}>
-                            <h3 className={`text-xl font-bold ${currentTheme.text} mb-4`}>Quick Actions</h3>
-                            <div className="flex flex-wrap gap-4">
-                                <button
-                                    onClick={handleStartTraining}
-                                    disabled={training.isTraining}
-                                    className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
-                                        training.isTraining
-                                            ? 'bg-gray-400 cursor-not-allowed'
-                                            : `${currentTheme.accent} text-white hover:scale-105 shadow-lg`
-                                    }`}
-                                >
-                                    {training.isTraining ? 'Training...' : 'Start Training'}
-                                </button>
-                                <button
-                                    onClick={handleStartOptimization}
-                                    disabled={optimization.isOptimizing}
-                                    className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
-                                        optimization.isOptimizing
-                                            ? 'bg-gray-400 cursor-not-allowed'
-                                            : `bg-gradient-to-r from-green-500 to-blue-500 text-white hover:scale-105 shadow-lg`
-                                    }`}
-                                >
-                                    {optimization.isOptimizing ? 'Optimizing...' : 'Optimize Prices'}
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('monte-carlo')}
-                                    className="px-6 py-3 rounded-lg font-medium bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:scale-105 transition-all duration-200 shadow-lg"
-                                >
-                                    Risk Analysis
-                                </button>
-                            </div>
-                        </div>
-
-                        {performanceMetrics && (
-                            <div className={`${currentTheme.cardBg} rounded-xl p-6 shadow-xl`}>
-                                <h3 className={`text-xl font-bold ${currentTheme.text} mb-4`}>Performance Overview</h3>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    <div>
-                                        <p className={`${currentTheme.textSecondary}`}>Revenue</p>
-                                        <p className={`text-2xl font-bold ${currentTheme.text}`}>
-                                            ${performanceMetrics.totalRevenue.toLocaleString(undefined, {maximumFractionDigits: 0})}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className={`${currentTheme.textSecondary}`}>Profit</p>
-                                        <p className={`text-2xl font-bold text-green-400`}>
-                                            ${performanceMetrics.profit.toLocaleString(undefined, {maximumFractionDigits: 0})}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className={`${currentTheme.textSecondary}`}>Margin</p>
-                                        <p className={`text-2xl font-bold ${currentTheme.text}`}>
-                                            {performanceMetrics.margin.toFixed(1)}%
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className={`${currentTheme.textSecondary}`}>Cost</p>
-                                        <p className={`text-2xl font-bold text-red-400`}>
-                                            ${performanceMetrics.totalCost.toLocaleString(undefined, {maximumFractionDigits: 0})}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 )}
 
@@ -1090,8 +1006,7 @@ const EvolveGCNPlatform = () => {
                             <div className="mb-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
                                 <p className={`text-sm ${currentTheme.text}`}>
                                     <strong>Training Process:</strong> The EvolveGCN model will analyze product relationships using graph neural networks
-                                    to extract price elasticities. The model processes product features (price, demand, cost, category) through
-                                    graph convolution layers to learn complex interaction patterns and generate accurate elasticity matrices.
+                                    to extract price elasticities.
                                 </p>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1151,43 +1066,10 @@ const EvolveGCNPlatform = () => {
                                             : `${currentTheme.accent} text-white hover:scale-105 shadow-lg`
                                     }`}
                                 >
-                                    {training.isTraining ? 'Training EvolveGCN...' : 'Start EvolveGCN Training'}
+                                    {training.isTraining ? 'Training...' : 'Start Training'}
                                 </button>
-                                <p className={`text-sm ${currentTheme.textSecondary} mt-2`}>
-                                    Training will extract elasticity relationships from current product data using graph neural networks.
-                                </p>
                             </div>
                         </div>
-
-                        {training.isTraining && (
-                            <div className={`${currentTheme.cardBg} rounded-xl p-6 shadow-xl`}>
-                                <h3 className={`text-xl font-bold ${currentTheme.text} mb-4`}>Training Progress</h3>
-                                <div className="mb-4">
-                                    <div className="flex justify-between text-sm">
-                                        <span className={currentTheme.textSecondary}>Epoch {training.currentEpoch}/{trainingConfig.epochs}</span>
-                                        <span className={currentTheme.textSecondary}>{training.progress.toFixed(1)}%</span>
-                                    </div>
-                                    <div className="w-full bg-gray-700 rounded-full h-2">
-                                        <div
-                                            className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
-                                            style={{ width: `${training.progress}%` }}
-                                        ></div>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4 text-center">
-                                    <div>
-                                        <p className={`${currentTheme.textSecondary}`}>Training Speed</p>
-                                        <p className={`text-lg font-bold ${currentTheme.text}`}>{training.trainingSpeed.toFixed(1)} steps/sec</p>
-                                    </div>
-                                    <div>
-                                        <p className={`${currentTheme.textSecondary}`}>Current Loss</p>
-                                        <p className={`text-lg font-bold text-orange-400`}>
-                                            {training.lossHistory[training.lossHistory.length - 1]?.loss || 'N/A'}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
 
                         {training.lossHistory.length > 0 && (
                             <div className={`${currentTheme.cardBg} rounded-xl p-6 shadow-xl`}>
@@ -1209,7 +1091,6 @@ const EvolveGCNPlatform = () => {
                                             <Legend />
                                             <Line type="monotone" dataKey="loss" stroke="#f59e0b" strokeWidth={2} name="Training Loss" />
                                             <Line type="monotone" dataKey="validation_loss" stroke="#ef4444" strokeWidth={2} name="Validation Loss" />
-                                            <Line type="monotone" dataKey="accuracy" stroke="#10b981" strokeWidth={2} name="Accuracy" />
                                         </LineChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -1221,41 +1102,16 @@ const EvolveGCNPlatform = () => {
                 {activeTab === 'optimization' && (
                     <div className="space-y-8">
                         <div className={`${currentTheme.cardBg} rounded-xl p-6 shadow-xl`}>
-                            <h3 className={`text-xl font-bold ${currentTheme.text} mb-4`}>Price Optimization Using EvolveGCN Elasticities</h3>
-
-                            <div className="mb-4 p-4 border rounded-lg">
-                                {Object.keys(elasticityMatrix).length > 0 ? (
-                                    <div className="bg-green-500/10 border-green-500/30 p-4 rounded-lg">
-                                        <div className="flex items-center space-x-2">
-                                            <span className="text-green-400 text-xl">✓</span>
-                                            <div>
-                                                <p className={`font-medium ${currentTheme.text}`}>Elasticity Matrix Ready</p>
-                                                <p className={`text-sm ${currentTheme.textSecondary}`}>
-                                                    EvolveGCN has extracted {Object.keys(elasticityMatrix).length} product elasticities.
-                                                    Ready for optimization.
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="bg-yellow-500/10 border-yellow-500/30 p-4 rounded-lg">
-                                        <div className="flex items-center space-x-2">
-                                            <span className="text-yellow-400 text-xl">⚠</span>
-                                            <div>
-                                                <p className={`font-medium ${currentTheme.text}`}>Elasticity Matrix Not Available</p>
-                                                <p className={`text-sm ${currentTheme.textSecondary}`}>
-                                                    Please train the EvolveGCN model first to extract price elasticities from product data.
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                            <h3 className={`text-xl font-bold ${currentTheme.text} mb-4`}>Price Optimization</h3>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                 <div>
                                     <label className={`block text-sm font-medium ${currentTheme.textSecondary}`}>Objective Function</label>
-                                    <select className={`mt-1 block w-full rounded-md ${currentTheme.cardBg} ${currentTheme.text} px-3 py-2`}>
+                                    <select
+                                        value={optimizationObjective}
+                                        onChange={(e) => setOptimizationObjective(e.target.value)}
+                                        className={`mt-1 block w-full rounded-md ${currentTheme.cardBg} ${currentTheme.text} px-3 py-2`}
+                                    >
                                         <option value="profit">Profit Maximization</option>
                                         <option value="revenue">Revenue Maximization</option>
                                     </select>
@@ -1281,103 +1137,45 @@ const EvolveGCNPlatform = () => {
                                     />
                                 </div>
                             </div>
-                            <button
-                                onClick={handleStartOptimization}
-                                disabled={optimization.isOptimizing || Object.keys(elasticityMatrix).length === 0}
-                                className={`px-8 py-3 rounded-lg font-medium transition-all duration-200 ${
-                                    optimization.isOptimizing || Object.keys(elasticityMatrix).length === 0
-                                        ? 'bg-gray-400 cursor-not-allowed'
-                                        : `bg-gradient-to-r from-green-500 to-blue-500 text-white hover:scale-105 shadow-lg`
-                                }`}
-                            >
-                                {optimization.isOptimizing ? 'Optimizing...' : 'Start Optimization'}
-                            </button>
-                        </div>
-
-                        {optimization.currentSolution && (
-                            <div className={`${currentTheme.cardBg} rounded-xl p-6 shadow-xl`}>
-                                <h3 className={`text-xl font-bold ${currentTheme.text} mb-4`}>Optimization Impact Summary</h3>
-                                <div className="flex flex-col md:flex-row gap-6">
-                                    <div className="flex-1 text-center p-4 rounded-lg bg-gradient-to-br from-blue-500/20 to-cyan-500/20">
-                                        <p className="text-2xl font-bold text-blue-400">
-                                            {(() => {
-                                                const totalOriginalProfit = products.reduce((sum, product, index) => {
-                                                    const originalDemand = MathUtils.calculateDemand(
-                                                        { ...product, currentPrice: product.basePrice },
-                                                        products.map(p => ({ ...p, currentPrice: p.basePrice })),
-                                                        elasticityMatrix
-                                                    );
-                                                    return sum + (product.basePrice - product.cost) * originalDemand;
-                                                }, 0);
-
-                                                const totalNewProfit = optimization.currentSolution.totalProfit;
-                                                const profitImprovement = totalOriginalProfit > 0 ? ((totalNewProfit - totalOriginalProfit) / totalOriginalProfit) * 100 : 0;
-                                                return (profitImprovement >= 0 ? '+' : '') + profitImprovement.toFixed(1) + '%';
-                                            })()}
-                                        </p>
-                                        <p className={`text-sm ${currentTheme.textSecondary}`}>Total Profit Change</p>
-                                    </div>
-
-                                    <div className="flex-1 text-center p-4 rounded-lg bg-gradient-to-br from-green-500/20 to-emerald-500/20">
-                                        <p className="text-2xl font-bold text-green-400">
-                                            {(() => {
-                                                const totalOriginalRevenue = products.reduce((sum, product) => {
-                                                    const originalDemand = MathUtils.calculateDemand(
-                                                        { ...product, currentPrice: product.basePrice },
-                                                        products.map(p => ({ ...p, currentPrice: p.basePrice })),
-                                                        elasticityMatrix
-                                                    );
-                                                    return sum + product.basePrice * originalDemand;
-                                                }, 0);
-
-                                                const totalNewRevenue = optimization.currentSolution.expectedRevenue;
-                                                const revenueImprovement = totalOriginalRevenue > 0 ? ((totalNewRevenue - totalOriginalRevenue) / totalOriginalRevenue) * 100 : 0;
-                                                return (revenueImprovement >= 0 ? '+' : '') + revenueImprovement.toFixed(1) + '%';
-                                            })()}
-                                        </p>
-                                        <p className={`text-sm ${currentTheme.textSecondary}`}>Total Revenue Change</p>
-                                    </div>
-
-                                    <div className="flex-1 text-center p-4 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20">
-                                        <p className="text-2xl font-bold text-purple-400">
-                                            {(() => {
-                                                const avgPriceChange = optimization.currentSolution.priceChanges.reduce((a, b) => a + b, 0) / optimization.currentSolution.priceChanges.length * 100;
-                                                return (avgPriceChange >= 0 ? '+' : '') + avgPriceChange.toFixed(1) + '%';
-                                            })()}
-                                        </p>
-                                        <p className={`text-sm ${currentTheme.textSecondary}`}>Avg Price Change</p>
-                                    </div>
-
-                                    <div className="flex-1 text-center p-4 rounded-lg bg-gradient-to-br from-orange-500/20 to-red-500/20">
-                                        <p className="text-2xl font-bold text-orange-400">
-                                            {(() => {
-                                                const originalTotalDemand = products.reduce((sum, product) => {
-                                                    const originalDemand = MathUtils.calculateDemand(
-                                                        { ...product, currentPrice: product.basePrice },
-                                                        products.map(p => ({ ...p, currentPrice: p.basePrice })),
-                                                        elasticityMatrix
-                                                    );
-                                                    return sum + originalDemand;
-                                                }, 0);
-
-                                                const newTotalDemand = products.reduce((sum, product, index) => {
-                                                    const newDemand = MathUtils.calculateDemand(
-                                                        { ...product, currentPrice: optimization.currentSolution.prices[index] },
-                                                        products.map((p, i) => ({ ...p, currentPrice: optimization.currentSolution.prices[i] })),
-                                                        elasticityMatrix
-                                                    );
-                                                    return sum + newDemand;
-                                                }, 0);
-
-                                                const demandChange = originalTotalDemand > 0 ? ((newTotalDemand - originalTotalDemand) / originalTotalDemand) * 100 : 0;
-                                                return (demandChange >= 0 ? '+' : '') + demandChange.toFixed(1) + '%';
-                                            })()}
-                                        </p>
-                                        <p className={`text-sm ${currentTheme.textSecondary}`}>Total Demand Change</p>
-                                    </div>
-                                </div>
+                            <div className="flex items-center space-x-4">
+                                <button
+                                    onClick={handleStartOptimization}
+                                    disabled={optimization.isOptimizing || Object.keys(elasticityMatrix).length === 0}
+                                    className={`px-8 py-3 rounded-lg font-medium transition-all duration-200 ${
+                                        optimization.isOptimizing || Object.keys(elasticityMatrix).length === 0
+                                            ? 'bg-gray-400 cursor-not-allowed'
+                                            : `bg-gradient-to-r from-green-500 to-blue-500 text-white hover:scale-105 shadow-lg`
+                                    }`}
+                                >
+                                    {optimization.isOptimizing ? 'Optimizing...' : 'Start Optimization'}
+                                </button>
+                                {/* **NEW:** Stop/Reset Button */}
+                                <button
+                                    onClick={() => {
+                                        if (optimization.isOptimizing) {
+                                            optimization.stopOptimization();
+                                            notifications.addNotification('Optimization stopped by user.', 'info');
+                                        } else {
+                                            optimization.resetOptimization();
+                                            notifications.addNotification('Optimization results have been reset.', 'info');
+                                        }
+                                    }}
+                                    disabled={!optimization.isOptimizing && !optimization.currentSolution}
+                                    className={`px-8 py-3 rounded-lg font-medium transition-all duration-200 ${
+                                        optimization.isOptimizing
+                                            ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white hover:scale-105 shadow-lg'
+                                            : 'bg-gradient-to-r from-gray-500 to-gray-600 text-white hover:scale-105 shadow-lg'
+                                    } ${(!optimization.isOptimizing && !optimization.currentSolution) && 'cursor-not-allowed opacity-50'}`}
+                                >
+                                    {optimization.isOptimizing ? 'Stop' : 'Reset'}
+                                </button>
                             </div>
-                        )}
+                            {optimization.convergenceMetrics && (
+                                <div className={`mt-4 text-sm p-3 rounded-lg ${optimization.convergenceMetrics.converged ? 'bg-green-500/20 text-green-300' : 'bg-yellow-500/20 text-yellow-300'}`}>
+                                    {optimization.convergenceMetrics.reason}
+                                </div>
+                            )}
+                        </div>
 
                         {optimization.optimizationHistory.length > 0 && (
                             <div className={`${currentTheme.cardBg} rounded-xl p-6 shadow-xl`}>
@@ -1397,7 +1195,7 @@ const EvolveGCNPlatform = () => {
                                                 }}
                                             />
                                             <Legend />
-                                            <Line yAxisId="left" type="monotone" dataKey="objective" stroke="#10b981" strokeWidth={2} name="Total Profit ($)" />
+                                            <Line yAxisId="left" type="monotone" dataKey="objective" stroke="#10b981" strokeWidth={2} name={optimizationObjective === 'profit' ? 'Total Profit ($)' : 'Total Revenue ($)'} />
                                             <Line yAxisId="right" type="monotone" dataKey="gradient_norm" stroke="#f59e0b" strokeWidth={2} name="Gradient Norm" />
                                         </LineChart>
                                     </ResponsiveContainer>
@@ -1407,59 +1205,35 @@ const EvolveGCNPlatform = () => {
 
                         {optimization.currentSolution && (
                             <div className={`${currentTheme.cardBg} rounded-xl p-6 shadow-xl`}>
-                                <h3 className={`text-xl font-bold ${currentTheme.text} mb-4`}>Optimized Prices & Business Impact</h3>
-                                <div className="overflow-x-auto">
+                                <h3 className={`text-xl font-bold ${currentTheme.text} mb-4`}>Optimized Prices & Business Impact (Sample)</h3>
+                                <div className="overflow-x-auto h-96">
                                     <table className="min-w-full">
-                                        <thead>
+                                        <thead className="sticky top-0 bg-slate-900/50 backdrop-blur-sm">
                                         <tr className="border-b border-gray-600">
                                             <th className={`text-left py-3 px-4 ${currentTheme.text}`}>Product</th>
-                                            <th className={`text-left py-3 px-4 ${currentTheme.text}`}>Category</th>
                                             <th className={`text-left py-3 px-4 ${currentTheme.text}`}>Original Price</th>
                                             <th className={`text-left py-3 px-4 ${currentTheme.text}`}>Optimized Price</th>
                                             <th className={`text-left py-3 px-4 ${currentTheme.text}`}>Price Change (%)</th>
                                             <th className={`text-left py-3 px-4 ${currentTheme.text}`}>New Demand</th>
                                             <th className={`text-left py-3 px-4 ${currentTheme.text}`}>Demand Change (%)</th>
                                             <th className={`text-left py-3 px-4 ${currentTheme.text}`}>New Profit</th>
-                                            <th className={`text-left py-3 px-4 ${currentTheme.text}`}>Profit Impact</th>
                                         </tr>
                                         </thead>
                                         <tbody>
-                                        {products.slice(0, 15).map((product, index) => {
+                                        {products.slice(0, 20).map((product, index) => {
                                             const optimizedPrice = optimization.currentSolution.prices[index];
                                             const priceChangePercent = ((optimizedPrice - product.basePrice) / product.basePrice) * 100;
 
-                                            const originalDemand = MathUtils.calculateDemand(
-                                                { ...product, currentPrice: product.basePrice },
-                                                products.map(p => ({ ...p, currentPrice: p.basePrice })),
-                                                elasticityMatrix
-                                            );
+                                            const originalDemand = MathUtils.calculateDemand({ ...product, currentPrice: product.basePrice }, products.map(p => ({ ...p, currentPrice: p.basePrice })), elasticityMatrix);
+                                            const newDemand = MathUtils.calculateDemand({ ...product, currentPrice: optimizedPrice }, products.map((p, i) => ({ ...p, currentPrice: optimization.currentSolution.prices[i] })), elasticityMatrix);
 
-                                            const newProducts = products.map((p, i) => ({
-                                                ...p,
-                                                currentPrice: optimization.currentSolution.prices[i]
-                                            }));
-                                            const newDemand = MathUtils.calculateDemand(
-                                                { ...product, currentPrice: optimizedPrice },
-                                                newProducts,
-                                                elasticityMatrix
-                                            );
+                                            const demandChangePercent = originalDemand > 0 ? ((newDemand - originalDemand) / originalDemand) * 100 : 0;
 
-                                            const demandChangePercent = originalDemand > 0 ?
-                                                ((newDemand - originalDemand) / originalDemand) * 100 : 0;
-
-                                            const originalProfit = (product.basePrice - product.cost) * originalDemand;
                                             const newProfit = (optimizedPrice - product.cost) * newDemand;
-                                            const profitChange = newProfit - originalProfit;
-                                            const profitChangePercent = originalProfit !== 0 ? (profitChange / originalProfit) * 100 : 0;
 
                                             return (
                                                 <tr key={product.id} className="border-b border-gray-700 hover:bg-white/5">
                                                     <td className={`py-3 px-4 ${currentTheme.text} font-medium`}>{product.name}</td>
-                                                    <td className={`py-3 px-4 ${currentTheme.textSecondary}`}>
-                              <span className="px-2 py-1 rounded-full text-xs bg-blue-500/20 text-blue-300">
-                                {product.category}
-                              </span>
-                                                    </td>
                                                     <td className={`py-3 px-4 ${currentTheme.text}`}>${product.basePrice.toFixed(2)}</td>
                                                     <td className={`py-3 px-4 ${currentTheme.text} font-semibold`}>${optimizedPrice.toFixed(2)}</td>
                                                     <td className={`py-3 px-4 font-semibold ${priceChangePercent >= 0 ? 'text-green-400' : 'text-red-400'}`}>
@@ -1469,17 +1243,7 @@ const EvolveGCNPlatform = () => {
                                                     <td className={`py-3 px-4 font-semibold ${demandChangePercent >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                                                         {demandChangePercent >= 0 ? '+' : ''}{demandChangePercent.toFixed(1)}%
                                                     </td>
-                                                    <td className={`py-3 px-4 ${currentTheme.text} font-semibold`}>${newProfit.toFixed(0)}</td>
-                                                    <td className={`py-3 px-4`}>
-                                                        <div className="flex flex-col items-start">
-                                <span className={`font-bold ${profitChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                  {profitChange >= 0 ? '+' : ''}${profitChange.toFixed(0)}
-                                </span>
-                                                            <span className={`text-xs ${profitChange >= 0 ? 'text-green-300' : 'text-red-300'}`}>
-                                  ({profitChangePercent >= 0 ? '+' : ''}{profitChangePercent.toFixed(1)}%)
-                                </span>
-                                                        </div>
-                                                    </td>
+                                                    <td className={`py-3 px-4 ${currentTheme.text} font-semibold`}>${newProfit.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
                                                 </tr>
                                             );
                                         })}
@@ -1492,244 +1256,67 @@ const EvolveGCNPlatform = () => {
                 )}
 
                 {activeTab === 'elasticity-matrix' && (
-                    <div className="space-y-8">
-                        <div className={`${currentTheme.cardBg} rounded-xl p-6 shadow-xl`}>
-                            <h3 className={`text-xl font-bold ${currentTheme.text} mb-4`}>EvolveGCN Elasticity Matrix Analysis</h3>
-
-                            {Object.keys(elasticityMatrix).length > 0 ? (
-                                <>
-                                    <div className="mb-6 p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-lg">
-                                        <p className={`text-sm ${currentTheme.text}`}>
-                                            <strong>Elasticity Matrix Insights:</strong> This matrix shows price elasticities learned by the EvolveGCN model.
-                                            Diagonal elements represent own-price elasticities, while off-diagonal elements show cross-price elasticities.
-                                        </p>
-                                    </div>
-
-                                    <div className="mb-8">
-                                        <h4 className={`text-lg font-semibold ${currentTheme.text} mb-4`}>Category Cross-Elasticity Matrix</h4>
-                                        <div className="overflow-x-auto">
-                                            <div className="inline-block min-w-full">
-                                                <div className="grid grid-cols-11 gap-1 text-xs">
-                                                    <div className="p-2 font-semibold"></div>
-                                                    {['Electronics', 'Clothing', 'Books', 'Home & Garden', 'Sports', 'Beauty', 'Automotive', 'Health', 'Toys', 'Office'].map((category) => (
-                                                        <div key={category} className={`p-2 font-semibold ${currentTheme.text} text-center transform -rotate-45 origin-center`}>
-                                                            {category.substring(0, 8)}
-                                                        </div>
-                                                    ))}
-
-                                                    {['Electronics', 'Clothing', 'Books', 'Home & Garden', 'Sports', 'Beauty', 'Automotive', 'Health', 'Toys', 'Office'].map((rowCategory) => (
-                                                        <React.Fragment key={rowCategory}>
-                                                            <div className={`p-2 font-semibold ${currentTheme.text}`}>{rowCategory}</div>
-                                                            {['Electronics', 'Clothing', 'Books', 'Home & Garden', 'Sports', 'Beauty', 'Automotive', 'Health', 'Toys', 'Office'].map((colCategory) => {
-                                                                const rowProducts = products.filter(p => p.category === rowCategory);
-                                                                const colProducts = products.filter(p => p.category === colCategory);
-
-                                                                let totalElasticity = 0;
-                                                                let count = 0;
-
-                                                                if (rowCategory === colCategory) {
-                                                                    rowProducts.forEach(p => {
-                                                                        if (elasticityMatrix[p.id]?.[p.id]) {
-                                                                            totalElasticity += elasticityMatrix[p.id][p.id];
-                                                                            count++;
-                                                                        }
-                                                                    });
-                                                                } else {
-                                                                    rowProducts.forEach(p1 => {
-                                                                        colProducts.forEach(p2 => {
-                                                                            if (elasticityMatrix[p1.id]?.[p2.id]) {
-                                                                                totalElasticity += elasticityMatrix[p1.id][p2.id];
-                                                                                count++;
-                                                                            }
-                                                                        });
-                                                                    });
-                                                                }
-
-                                                                const avgElasticity = count > 0 ? totalElasticity / count : 0;
-                                                                const intensity = Math.min(Math.abs(avgElasticity), 2) / 2;
-
-                                                                let bgColor;
-                                                                if (rowCategory === colCategory) {
-                                                                    bgColor = `rgba(239, 68, 68, ${intensity})`;
-                                                                } else if (avgElasticity > 0) {
-                                                                    bgColor = `rgba(251, 146, 60, ${intensity})`;
-                                                                } else if (avgElasticity < 0) {
-                                                                    bgColor = `rgba(34, 197, 94, ${intensity})`;
-                                                                } else {
-                                                                    bgColor = `rgba(156, 163, 175, 0.2)`;
-                                                                }
-
-                                                                return (
-                                                                    <div
-                                                                        key={`${rowCategory}-${colCategory}`}
-                                                                        className="p-2 text-center text-white font-semibold rounded"
-                                                                        style={{ backgroundColor: bgColor }}
-                                                                        title={`${rowCategory} → ${colCategory}: ${avgElasticity.toFixed(3)}`}
-                                                                    >
-                                                                        {avgElasticity.toFixed(2)}
-                                                                    </div>
-                                                                );
-                                                            })}
-                                                        </React.Fragment>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                                            <div className="flex items-center">
-                                                <div className="w-4 h-4 bg-red-500 rounded mr-2"></div>
-                                                <span className={currentTheme.textSecondary}>Own-Category Elasticity (Diagonal)</span>
-                                            </div>
-                                            <div className="flex items-center">
-                                                <div className="w-4 h-4 bg-orange-500 rounded mr-2"></div>
-                                                <span className={currentTheme.textSecondary}>Positive Cross-Elasticity (Substitutes)</span>
-                                            </div>
-                                            <div className="flex items-center">
-                                                <div className="w-4 h-4 bg-green-500 rounded mr-2"></div>
-                                                <span className={currentTheme.textSecondary}>Negative Cross-Elasticity (Complements)</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="text-center py-12">
-                                    <div className="text-6xl mb-4">📊</div>
-                                    <h4 className={`text-xl font-semibold ${currentTheme.text} mb-2`}>No Elasticity Matrix Available</h4>
-                                    <p className={`${currentTheme.textSecondary} mb-4`}>
-                                        Train the EvolveGCN model to extract price elasticities and analyze category relationships.
-                                    </p>
-                                    <button
-                                        onClick={() => setActiveTab('training')}
-                                        className={`px-6 py-3 rounded-lg ${currentTheme.accent} text-white hover:scale-105 transition-all duration-200`}
-                                    >
-                                        Start Training
-                                    </button>
-                                </div>
-                            )}
-                        </div>
+                    <div className={`${currentTheme.cardBg} rounded-xl p-6 shadow-xl`}>
+                        <h3 className={`text-xl font-bold ${currentTheme.text} mb-4`}>EvolveGCN Elasticity Matrix Analysis (Sample)</h3>
+                        {Object.keys(elasticityMatrix).length > 0 ? (
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full text-xs">
+                                    <thead>
+                                    <tr className="border-b border-gray-600">
+                                        <th className={`py-2 px-2 ${currentTheme.text}`}>Product</th>
+                                        {products.slice(0, 20).map(p => <th key={p.id} className={`py-2 px-2 ${currentTheme.text}`}>{p.name}</th>)}
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {products.slice(0, 20).map(p1 => (
+                                        <tr key={p1.id} className="border-b border-gray-700 hover:bg-white/5">
+                                            <td className={`py-2 px-2 font-medium ${currentTheme.text}`}>{p1.name}</td>
+                                            {products.slice(0, 20).map(p2 => {
+                                                const elasticity = elasticityMatrix[p1.id]?.[p2.id] || 0;
+                                                const color = p1.id === p2.id ? 'text-yellow-400' : elasticity > 0 ? 'text-green-400' : 'text-red-400';
+                                                return <td key={p2.id} className={`py-2 px-2 text-center ${color}`}>{elasticity.toFixed(2)}</td>
+                                            })}
+                                        </tr>
+                                    ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : <p className={`${currentTheme.textSecondary}`}>No elasticity matrix available. Please train the model.</p>}
                     </div>
                 )}
 
                 {activeTab === 'monte-carlo' && (
-                    <div className="space-y-8">
-                        <div className={`${currentTheme.cardBg} rounded-xl p-6 shadow-xl`}>
-                            <h3 className={`text-xl font-bold ${currentTheme.text} mb-4`}>Monte Carlo Sensitivity Analysis</h3>
-                            <div className="mb-4 p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
-                                <p className={`text-sm ${currentTheme.text}`}>
-                                    <strong>Risk Analysis:</strong> Run thousands of pricing scenarios to understand potential outcomes
-                                    and assess the robustness of your pricing strategy.
-                                </p>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                                <div>
-                                    <label className={`block text-sm font-medium ${currentTheme.textSecondary}`}>Simulations</label>
-                                    <select className={`mt-1 block w-full rounded-md ${currentTheme.cardBg} ${currentTheme.text} px-3 py-2`}>
-                                        <option value="1000">1,000</option>
-                                        <option value="5000">5,000</option>
-                                        <option value="10000">10,000</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className={`block text-sm font-medium ${currentTheme.textSecondary}`}>Price Variation Range</label>
-                                    <select className={`mt-1 block w-full rounded-md ${currentTheme.cardBg} ${currentTheme.text} px-3 py-2`}>
-                                        <option value="20">±20%</option>
-                                        <option value="30">±30%</option>
-                                        <option value="40">±40%</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className={`block text-sm font-medium ${currentTheme.textSecondary}`}>Analysis Type</label>
-                                    <select className={`mt-1 block w-full rounded-md ${currentTheme.cardBg} ${currentTheme.text} px-3 py-2`}>
-                                        <option value="revenue">Revenue</option>
-                                        <option value="profit">Profit</option>
-                                        <option value="both">Combined</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <button
-                                onClick={() => monteCarloAnalysis.runMonteCarloAnalysis(products, elasticityMatrix, 1000)}
-                                disabled={monteCarloAnalysis.isRunning || Object.keys(elasticityMatrix).length === 0}
-                                className={`px-8 py-3 rounded-lg font-medium transition-all duration-200 ${
-                                    monteCarloAnalysis.isRunning || Object.keys(elasticityMatrix).length === 0
-                                        ? 'bg-gray-400 cursor-not-allowed'
-                                        : `bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:scale-105 shadow-lg`
-                                }`}
-                            >
-                                {monteCarloAnalysis.isRunning ? 'Running Analysis...' : 'Start Monte Carlo Analysis'}
-                            </button>
-
-                            {monteCarloAnalysis.isRunning && (
-                                <div className="mt-4">
-                                    <div className="flex justify-between text-sm mb-2">
-                                        <span className={currentTheme.textSecondary}>Analysis Progress</span>
-                                        <span className={currentTheme.textSecondary}>{monteCarloAnalysis.progress.toFixed(1)}%</span>
-                                    </div>
-                                    <div className="w-full bg-gray-700 rounded-full h-2">
-                                        <div
-                                            className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300"
-                                            style={{ width: `${monteCarloAnalysis.progress}%` }}
-                                        ></div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
+                    <div className={`${currentTheme.cardBg} rounded-xl p-6 shadow-xl`}>
+                        <h3 className={`text-xl font-bold ${currentTheme.text} mb-4`}>Monte Carlo Sensitivity Analysis</h3>
+                        <button
+                            onClick={() => monteCarloAnalysis.runMonteCarloAnalysis(products, elasticityMatrix, 1000)}
+                            disabled={monteCarloAnalysis.isRunning || Object.keys(elasticityMatrix).length === 0}
+                            className={`px-8 py-3 rounded-lg font-medium transition-all duration-200 mb-4 ${
+                                monteCarloAnalysis.isRunning || Object.keys(elasticityMatrix).length === 0
+                                    ? 'bg-gray-400 cursor-not-allowed'
+                                    : `bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:scale-105 shadow-lg`
+                            }`}
+                        >
+                            {monteCarloAnalysis.isRunning ? `Running... ${monteCarloAnalysis.progress.toFixed(0)}%` : 'Start Monte Carlo Analysis'}
+                        </button>
                         {monteCarloAnalysis.results && (
-                            <>
-                                <div className={`${currentTheme.cardBg} rounded-xl p-6 shadow-xl`}>
-                                    <h3 className={`text-xl font-bold ${currentTheme.text} mb-4`}>Risk Metrics Summary</h3>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                                        <div className="text-center">
-                                            <p className={`${currentTheme.textSecondary} text-sm`}>Mean Revenue</p>
-                                            <p className={`text-2xl font-bold ${currentTheme.text}`}>
-                                                ${monteCarloAnalysis.results.revenue.mean.toLocaleString()}
-                                            </p>
-                                        </div>
-                                        <div className="text-center">
-                                            <p className={`${currentTheme.textSecondary} text-sm`}>Revenue Std Dev</p>
-                                            <p className="text-2xl font-bold text-orange-400">
-                                                ${monteCarloAnalysis.results.revenue.std.toLocaleString()}
-                                            </p>
-                                        </div>
-                                        <div className="text-center">
-                                            <p className={`${currentTheme.textSecondary} text-sm`}>5th Percentile</p>
-                                            <p className="text-2xl font-bold text-red-400">
-                                                ${monteCarloAnalysis.results.revenue.percentiles.p5.toLocaleString()}
-                                            </p>
-                                        </div>
-                                        <div className="text-center">
-                                            <p className={`${currentTheme.textSecondary} text-sm`}>95th Percentile</p>
-                                            <p className="text-2xl font-bold text-green-400">
-                                                ${monteCarloAnalysis.results.revenue.percentiles.p95.toLocaleString()}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className={`${currentTheme.cardBg} rounded-xl p-6 shadow-xl`}>
-                                    <h3 className={`text-xl font-bold ${currentTheme.text} mb-4`}>Monte Carlo Results Distribution</h3>
-                                    <div className="h-80">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <ScatterChart data={monteCarloAnalysis.results.outcomes.slice(0, 200)}>
-                                                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                                                <XAxis dataKey="revenue" stroke={currentTheme.text} name="Revenue" />
-                                                <YAxis dataKey="profit" stroke={currentTheme.text} name="Profit" />
-                                                <Tooltip
-                                                    contentStyle={{
-                                                        backgroundColor: theme === 'dark' ? '#1f2937' : '#ffffff',
-                                                        border: '1px solid #374151',
-                                                        borderRadius: '8px'
-                                                    }}
-                                                />
-                                                <Scatter dataKey="profit" fill="#8b5cf6" />
-                                            </ScatterChart>
-                                        </ResponsiveContainer>
-                                    </div>
-                                </div>
-                            </>
+                            <div className="h-80">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <ScatterChart data={monteCarloAnalysis.results.outcomes.slice(0, 200)}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                                        <XAxis dataKey="revenue" stroke={currentTheme.text} name="Revenue" />
+                                        <YAxis dataKey="profit" stroke={currentTheme.text} name="Profit" />
+                                        <Tooltip
+                                            contentStyle={{
+                                                backgroundColor: theme === 'dark' ? '#1f2937' : '#ffffff',
+                                                border: '1px solid #374151',
+                                                borderRadius: '8px'
+                                            }}
+                                        />
+                                        <Scatter dataKey="profit" fill="#8b5cf6" />
+                                    </ScatterChart>
+                                </ResponsiveContainer>
+                            </div>
                         )}
                     </div>
                 )}
@@ -1737,16 +1324,15 @@ const EvolveGCNPlatform = () => {
                 {activeTab === 'network-3d' && (
                     <div className="space-y-8">
                         <div className={`${currentTheme.cardBg} rounded-xl p-6 shadow-xl`}>
-                            <h3 className={`text-xl font-bold ${currentTheme.text} mb-4`}>3D Product Relationship Network</h3>
+                            <h3 className={`text-xl font-bold ${currentTheme.text} mb-4`}>Product Relationship Network</h3>
                             <div className="mb-4 p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-lg">
                                 <p className={`text-sm ${currentTheme.text}`}>
-                                    <strong>Interactive D3 Visualization:</strong> Explore product relationships in this dynamic force-directed graph.
-                                    Drag nodes to see the network adjust.
+                                    <strong>Interactive D3 Visualization:</strong> Zoom with your mouse wheel and drag nodes to see the network adjust. Click a node to see details below.
                                 </p>
                             </div>
 
-                            <div className="relative w-full h-96 border border-gray-600 rounded-lg overflow-hidden bg-gradient-to-br from-blue-900/20 to-purple-900/20">
-                                <D3Network products={products} elasticityMatrix={elasticityMatrix} theme={theme} />
+                            <div className="relative w-full h-[600px] border border-gray-600 rounded-lg overflow-hidden bg-gradient-to-br from-blue-900/20 to-purple-900/20">
+                                <D3Network products={products} elasticityMatrix={elasticityMatrix} theme={theme} onNodeClick={setSelectedNode} />
                             </div>
 
                             <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -1764,208 +1350,126 @@ const EvolveGCNPlatform = () => {
                                 </div>
                             </div>
                         </div>
+                        {/* **NEW:** Node Detail Table */}
+                        {selectedNode && (
+                            <div className={`${currentTheme.cardBg} rounded-xl p-6 shadow-xl`}>
+                                <h3 className={`text-xl font-bold ${currentTheme.text} mb-4`}>Details for: {selectedNode.name}</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div>
+                                        <h4 className={`text-lg font-semibold ${currentTheme.text} mb-2`}>Product Info</h4>
+                                        <table className="min-w-full text-sm">
+                                            <tbody>
+                                            <tr className="border-b border-gray-700"><td className={`py-2 pr-4 ${currentTheme.textSecondary}`}>Category</td><td className={currentTheme.text}>{selectedNode.category}</td></tr>
+                                            <tr className="border-b border-gray-700"><td className={`py-2 pr-4 ${currentTheme.textSecondary}`}>Base Price</td><td className={currentTheme.text}>${selectedNode.basePrice.toFixed(2)}</td></tr>
+                                            <tr className="border-b border-gray-700"><td className={`py-2 pr-4 ${currentTheme.textSecondary}`}>Cost</td><td className={currentTheme.text}>${selectedNode.cost.toFixed(2)}</td></tr>
+                                            <tr className="border-b border-gray-700"><td className={`py-2 pr-4 ${currentTheme.textSecondary}`}>Base Demand</td><td className={currentTheme.text}>{Math.round(selectedNode.baseDemand)}</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div>
+                                        <h4 className={`text-lg font-semibold ${currentTheme.text} mb-2`}>Connected Products</h4>
+                                        <div className="overflow-y-auto h-40">
+                                            <table className="min-w-full text-sm">
+                                                <thead>
+                                                <tr className="border-b border-gray-600">
+                                                    <th className={`text-left py-2 ${currentTheme.text}`}>Product</th>
+                                                    <th className={`text-left py-2 ${currentTheme.text}`}>Relationship</th>
+                                                    <th className={`text-left py-2 ${currentTheme.text}`}>Elasticity</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                {products.map(p => {
+                                                    const elasticity = elasticityMatrix[selectedNode.id]?.[p.id];
+                                                    if (p.id !== selectedNode.id && elasticity && Math.abs(elasticity) > 0.05) {
+                                                        const isSubstitute = elasticity > 0;
+                                                        return (
+                                                            <tr key={p.id} className="border-b border-gray-700">
+                                                                <td className={`py-2 ${currentTheme.text}`}>{p.name}</td>
+                                                                <td className={isSubstitute ? 'text-green-400' : 'text-red-400'}>{isSubstitute ? 'Substitute' : 'Complement'}</td>
+                                                                <td className={isSubstitute ? 'text-green-400' : 'text-red-400'}>{elasticity.toFixed(3)}</td>
+                                                            </tr>
+                                                        )
+                                                    }
+                                                    return null;
+                                                })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
                 {activeTab === 'data-import' && (
-                    <div className="space-y-8">
-                        <div className={`${currentTheme.cardBg} rounded-xl p-6 shadow-xl`}>
-                            <h3 className={`text-xl font-bold ${currentTheme.text} mb-4`}>Data Import & Export</h3>
-
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                <div>
-                                    <h4 className={`text-lg font-semibold ${currentTheme.text} mb-4`}>Import Product Data</h4>
-                                    <div className="mb-4 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
-                                        <p className={`text-sm ${currentTheme.text}`}>
-                                            <strong>CSV Format:</strong> name, category, price (or basePrice),
-                                            demand (or baseDemand), cost, inventory.
-                                        </p>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className={`block text-sm font-medium ${currentTheme.textSecondary} mb-2`}>
-                                                Upload CSV File
-                                            </label>
-                                            <input
-                                                type="file"
-                                                accept=".csv"
-                                                onChange={(e) => {
-                                                    const file = e.target.files[0];
-                                                    if (file) {
-                                                        const reader = new FileReader();
-                                                        reader.onload = (e) => {
-                                                            dataImport.importCSV(e.target.result);
-                                                        };
-                                                        reader.readAsText(file);
-                                                    }
+                    <div className={`${currentTheme.cardBg} rounded-xl p-6 shadow-xl`}>
+                        <h3 className={`text-xl font-bold ${currentTheme.text} mb-4`}>Data Import & Export</h3>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div>
+                                <h4 className={`text-lg font-semibold ${currentTheme.text} mb-4`}>Import Product Data</h4>
+                                <textarea
+                                    placeholder="name,category,price,demand,cost,inventory&#10;Product A,Electronics,99.99,150,45.00,200"
+                                    rows={4}
+                                    className={`w-full rounded-md ${currentTheme.cardBg} ${currentTheme.text} px-3 py-2 border border-gray-600 font-mono text-sm`}
+                                    onChange={(e) => {
+                                        if (e.target.value.trim()) {
+                                            dataImport.importCSV(e.target.value);
+                                        }
+                                    }}
+                                />
+                                {dataImport.importResults && (
+                                    <div className={`mt-4 p-4 rounded-lg ${dataImport.importResults.success ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+                                        <p className={dataImport.importResults.success ? 'text-green-300' : 'text-red-300'}>{dataImport.importResults.message}</p>
+                                        {dataImport.importResults.success && (
+                                            <button
+                                                onClick={() => {
+                                                    setProducts(dataImport.importResults.products);
+                                                    notifications.addNotification(`Imported ${dataImport.importResults.count} products`, 'success');
                                                 }}
-                                                className={`block w-full text-sm ${currentTheme.text}
-                          file:mr-4 file:py-2 file:px-4
-                          file:rounded-full file:border-0
-                          file:text-sm file:font-semibold
-                          file:bg-purple-50 file:text-purple-700
-                          hover:file:bg-purple-100`}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className={`block text-sm font-medium ${currentTheme.textSecondary} mb-2`}>
-                                                Or paste CSV data directly:
-                                            </label>
-                                            <textarea
-                                                placeholder="name,category,price,demand,cost,inventory&#10;Product A,Electronics,99.99,150,45.00,200"
-                                                rows={4}
-                                                className={`w-full rounded-md ${currentTheme.cardBg} ${currentTheme.text} px-3 py-2 border border-gray-600 font-mono text-sm`}
-                                                onChange={(e) => {
-                                                    if (e.target.value.trim()) {
-                                                        dataImport.importCSV(e.target.value);
-                                                    }
-                                                }}
-                                            />
-                                        </div>
+                                                className="mt-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                                            >
+                                                Use Imported Data
+                                            </button>
+                                        )}
                                     </div>
-
-                                    {dataImport.importResults && (
-                                        <div className={`mt-4 p-4 rounded-lg ${
-                                            dataImport.importResults.success
-                                                ? 'bg-green-500/10 border border-green-500/30'
-                                                : 'bg-red-500/10 border border-red-500/30'
-                                        }`}>
-                                            <p className={`font-medium ${dataImport.importResults.success ? 'text-green-400' : 'text-red-400'}`}>
-                                                {dataImport.importResults.message}
-                                            </p>
-                                            {dataImport.importResults.success && (
-                                                <button
-                                                    onClick={() => {
-                                                        setProducts(dataImport.importResults.products);
-                                                        notifications.addNotification(`Imported ${dataImport.importResults.count} products`, 'success');
-                                                    }}
-                                                    className="mt-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                                                >
-                                                    Use Imported Data
-                                                </button>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <h4 className={`text-lg font-semibold ${currentTheme.text} mb-4`}>Export & Backup</h4>
-
-                                    <div className="space-y-4">
-                                        <button
-                                            onClick={() => dataImport.exportCSV(products)}
-                                            className={`w-full px-4 py-3 rounded-lg ${currentTheme.accent} text-white hover:scale-105 transition-all duration-200`}
-                                        >
-                                            📊 Export Current Products (CSV)
-                                        </button>
-
-                                        <button
-                                            onClick={() => {
-                                                const exportData = {
-                                                    products,
-                                                    elasticityMatrix,
-                                                    trainingConfig,
-                                                    timestamp: new Date().toISOString(),
-                                                    version: '1.0'
-                                                };
-                                                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-                                                const url = URL.createObjectURL(blob);
-                                                const a = document.createElement('a');
-                                                a.href = url;
-                                                a.download = 'evolvegcn-model.json';
-                                                a.click();
-                                                URL.revokeObjectURL(url);
-                                            }}
-                                            className="w-full px-4 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:scale-105 transition-all duration-200"
-                                        >
-                                            💾 Export Complete Model
-                                        </button>
-                                    </div>
-                                </div>
+                                )}
+                            </div>
+                            <div>
+                                <h4 className={`text-lg font-semibold ${currentTheme.text} mb-4`}>Export & Backup</h4>
+                                <button
+                                    onClick={() => dataImport.exportCSV(products)}
+                                    className={`w-full px-4 py-3 rounded-lg ${currentTheme.accent} text-white hover:scale-105 transition-all`}
+                                >
+                                    Export Current Products (CSV)
+                                </button>
                             </div>
                         </div>
                     </div>
                 )}
 
                 {activeTab === 'executive' && (
-                    <div className="space-y-8">
-                        <div className={`${currentTheme.cardBg} rounded-xl p-6 shadow-xl`}>
-                            <h3 className={`text-xl font-bold ${currentTheme.text} mb-4`}>Executive Dashboard</h3>
-
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                                <div className="lg:col-span-2">
-                                    <h4 className={`text-lg font-semibold ${currentTheme.text} mb-4`}>Key Performance Indicators</h4>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                        <div className="text-center p-4 rounded-lg bg-gradient-to-br from-green-500/20 to-emerald-500/20">
-                                            <p className="text-2xl font-bold text-green-400">
-                                                {performanceMetrics ? `$${(performanceMetrics.totalRevenue / 1000).toFixed(0)}K` : 'N/A'}
-                                            </p>
-                                            <p className={`text-sm ${currentTheme.textSecondary}`}>Revenue</p>
-                                        </div>
-                                        <div className="text-center p-4 rounded-lg bg-gradient-to-br from-blue-500/20 to-cyan-500/20">
-                                            <p className="text-2xl font-bold text-blue-400">
-                                                {performanceMetrics ? `$${(performanceMetrics.profit / 1000).toFixed(0)}K` : 'N/A'}
-                                            </p>
-                                            <p className={`text-sm ${currentTheme.textSecondary}`}>Profit</p>
-                                        </div>
-                                        <div className="text-center p-4 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20">
-                                            <p className="text-2xl font-bold text-purple-400">
-                                                {performanceMetrics ? `${performanceMetrics.margin.toFixed(1)}%` : 'N/A'}
-                                            </p>
-                                            <p className={`text-sm ${currentTheme.textSecondary}`}>Margin</p>
-                                        </div>
-                                        <div className="text-center p-4 rounded-lg bg-gradient-to-br from-orange-500/20 to-red-500/20">
-                                            <p className="text-2xl font-bold text-orange-400">
-                                                {Object.keys(elasticityMatrix).length > 0 ?
-                                                    (products.reduce((sum, p) => sum + (elasticityMatrix[p.id]?.[p.id] || 0), 0) / products.length * -1).toFixed(1)
-                                                    : '0'
-                                                }
-                                            </p>
-                                            <p className={`text-sm ${currentTheme.textSecondary}`}>Avg Elasticity</p>
-                                        </div>
-                                    </div>
-                                </div>
-
+                    <div className={`${currentTheme.cardBg} rounded-xl p-6 shadow-xl`}>
+                        <h3 className={`text-xl font-bold ${currentTheme.text} mb-4`}>Executive Summary</h3>
+                        {performanceMetrics ? (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div>
-                                    <h4 className={`text-lg font-semibold ${currentTheme.text} mb-4`}>Quick Actions</h4>
-                                    <div className="space-y-3">
-                                        <button
-                                            onClick={() => {
-                                                advancedOptimization.runMultiObjectiveOptimization(
-                                                    products,
-                                                    elasticityMatrix,
-                                                    { profit: 0.4, revenue: 0.3, volume: 0.2, risk: 0.1 },
-                                                    { maxPriceChange: 0.25, minMarkup: 1.1 }
-                                                );
-                                            }}
-                                            disabled={advancedOptimization.isOptimizing || Object.keys(elasticityMatrix).length === 0}
-                                            className={`w-full px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                                                advancedOptimization.isOptimizing || Object.keys(elasticityMatrix).length === 0
-                                                    ? 'bg-gray-400 cursor-not-allowed'
-                                                    : `bg-gradient-to-r from-green-500 to-blue-500 text-white hover:scale-105`
-                                            }`}
-                                        >
-                                            🎯 Run Advanced Optimization
-                                        </button>
-                                        <button
-                                            onClick={() => monteCarloAnalysis.runMonteCarloAnalysis(products, elasticityMatrix, 5000)}
-                                            disabled={monteCarloAnalysis.isRunning || Object.keys(elasticityMatrix).length === 0}
-                                            className={`w-full px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                                                monteCarloAnalysis.isRunning || Object.keys(elasticityMatrix).length === 0
-                                                    ? 'bg-gray-400 cursor-not-allowed'
-                                                    : `bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:scale-105`
-                                            }`}
-                                        >
-                                            📊 Risk Analysis
-                                        </button>
-                                    </div>
+                                    <h4 className="text-lg font-semibold text-green-400">Optimized Revenue</h4>
+                                    <p className={`text-3xl font-bold ${currentTheme.text}`}>${performanceMetrics.totalRevenue.toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
+                                </div>
+                                <div>
+                                    <h4 className="text-lg font-semibold text-blue-400">Optimized Profit</h4>
+                                    <p className={`text-3xl font-bold ${currentTheme.text}`}>${performanceMetrics.totalProfit.toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
+                                </div>
+                                <div>
+                                    <h4 className="text-lg font-semibold text-purple-400">Optimized Margin</h4>
+                                    <p className={`text-3xl font-bold ${currentTheme.text}`}>{performanceMetrics.margin.toFixed(1)}%</p>
                                 </div>
                             </div>
-                        </div>
+                        ) : <p className={`${currentTheme.textSecondary}`}>Run an optimization to see the executive summary.</p>}
                     </div>
                 )}
+
             </main>
 
             <div className="fixed top-4 right-4 space-y-2 z-50">
@@ -1992,32 +1496,6 @@ const EvolveGCNPlatform = () => {
 
             <footer className={`${currentTheme.cardBg} mt-16`}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div>
-                            <h3 className={`text-lg font-semibold ${currentTheme.text} mb-2`}>EvolveGCN Platform</h3>
-                            <p className={`${currentTheme.textSecondary} text-sm`}>
-                                Advanced price optimization using Graph Neural Networks and economic modeling.
-                            </p>
-                        </div>
-                        <div>
-                            <h4 className={`font-semibold ${currentTheme.text} mb-2`}>Features</h4>
-                            <ul className={`${currentTheme.textSecondary} text-sm space-y-1`}>
-                                <li>• Real-time Graph Neural Network training</li>
-                                <li>• Multi-objective price optimization</li>
-                                <li>• Monte Carlo risk analysis</li>
-                                <li>• Enterprise-grade performance</li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h4 className={`font-semibold ${currentTheme.text} mb-2`}>Technical Stack</h4>
-                            <ul className={`${currentTheme.textSecondary} text-sm space-y-1`}>
-                                <li>• React + D3.js + Custom GNN</li>
-                                <li>• Recharts for visualizations</li>
-                                <li>• Advanced mathematical modeling</li>
-                                <li>• Tailwind CSS</li>
-                            </ul>
-                        </div>
-                    </div>
                     <div className={`border-t border-gray-700 mt-8 pt-4 text-center ${currentTheme.textSecondary} text-sm`}>
                         © 2025 EvolveGCN Platform. Built with React and advanced mathematics.
                     </div>
