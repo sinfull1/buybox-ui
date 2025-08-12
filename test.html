@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Policy Coder - AI-Powered Policy to Code Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            animation: drift 20s linear infinite;
+        }
+
+        @keyframes drift {
+            to {
+                transform: translate(20px, 20px);
+            }
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .workflow {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .step {
+            text-align: center;
+            flex: 1;
+            position: relative;
+            padding: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .step:hover {
+            transform: translateY(-5px);
+        }
+
+        .step.active .step-number {
+            background: #667eea;
+            transform: scale(1.1);
+        }
+
+        .step.completed .step-number {
+            background: #28a745;
+        }
+
+        .step-number {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #dee2e6;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: bold;
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+        }
+
+        .step-title {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9em;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out forwards;
+            animation-delay: 0.2s;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(to bottom, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        textarea:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        button.secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        }
+
+        button.success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        button.warning {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+        }
+
+        .code-output {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            overflow-x: auto;
+            position: relative;
+            min-height: 200px;
+        }
+
+        .code-output::before {
+            content: 'Generated Code';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 11px;
+            color: #5c6370;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .glossary-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .glossary-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glossary-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .glossary-item:hover::before {
+            transform: translateX(0);
+        }
+
+        .glossary-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .glossary-field {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .glossary-type {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .test-results {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+
+        .test-case {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #28a745;
+            transition: all 0.3s ease;
+        }
+
+        .test-case:hover {
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-case.failed {
+            border-left-color: #dc3545;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+        }
+
+        .status-indicator.processing {
+            background: #ffc107;
+        }
+
+        .status-indicator.ready {
+            background: #28a745;
+        }
+
+        .status-indicator.error {
+            background: #dc3545;
+        }
+
+        .model-status {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(102, 126, 234, 0.3);
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🚀 Policy Coder</h1>
+        <p>Transform natural language policies into executable code with AI</p>
+    </div>
+
+    <div class="workflow">
+        <div class="step active" id="step1">
+            <div class="step-number">1</div>
+            <div class="step-title">Define Context</div>
+        </div>
+        <div class="step" id="step2">
+            <div class="step-number">2</div>
+            <div class="step-title">Write Policy</div>
+        </div>
+        <div class="step" id="step3">
+            <div class="step-number">3</div>
+            <div class="step-title">Generate Code</div>
+        </div>
+        <div class="step" id="step4">
+            <div class="step-number">4</div>
+            <div class="step-title">Compile WASM</div>
+        </div>
+        <div class="step" id="step5">
+            <div class="step-number">5</div>
+            <div class="step-title">Test & Validate</div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="model-status">
+            <span class="status-indicator ready"></span>
+            <strong>Model Status:</strong>
+            <span id="modelStatus">Ready - Small Language Model Initialized</span>
+            <span class="loading-spinner hidden" id="loadingSpinner"></span>
+        </div>
+
+        <!-- Step 1: Context Definition -->
+        <div class="section" id="contextSection">
+            <h2 class="section-title">Context Definition (Glossary)</h2>
+            <p style="margin-bottom: 15px; color: #6c757d;">Define all fields and variables that will be used in your policy. This trains the AI model on your domain-specific terminology.</p>
+            <textarea id="contextInput" placeholder="Example:
+age: integer - The age of the applicant in years
+income: float - Annual income in USD
+credit_score: integer - Credit score ranging from 300 to 850
+loan_amount: float - Requested loan amount in USD
+employment_years: integer - Years at current employment
+debt_to_income: float - Ratio of monthly debt to monthly income"></textarea>
+            <button onclick="processContext()">Fine-tune Model with Context</button>
+            <div class="glossary-items" id="glossaryDisplay"></div>
+        </div>
+
+        <!-- Step 2: Policy Definition -->
+        <div class="section" id="policySection">
+            <h2 class="section-title">Policy Definition</h2>
+            <p style="margin-bottom: 15px; color: #6c757d;">Describe your policy logic in plain English. The AI will convert this to executable Python code.</p>
+            <textarea id="policyInput" placeholder="Example:
+If the applicant's age is greater than 18 and less than 65, and their credit score is above 650, approve the loan.
+If the credit score is between 600 and 650, approve only if the debt to income ratio is less than 0.4 and employment years is greater than 2.
+If the loan amount exceeds 100000, require a credit score of at least 700.
+Reject all applications where age is less than 18 or credit score is below 600."></textarea>
+            <button onclick="generateCode()">Generate Python Code</button>
+        </div>
+
+        <!-- Step 3: Code Generation -->
+        <div class="section" id="codeSection">
+            <h2 class="section-title">Generated Python Code</h2>
+            <div class="code-output" id="codeOutput">
+                <span style="color: #5c6370;">// Generated code will appear here...</span>
+            </div>
+            <div class="button-group">
+                <button onclick="copyCode()" class="secondary">📋 Copy Code</button>
+                <button onclick="editCode()" class="secondary">Edit Code</button>
+                <button onclick="validateCode()" class="warning">Validate Syntax</button>
+                <button onclick="compileToWasm()" class="success">Compile to WASM</button>
+            </div>
+        </div>
+
+        <!-- Step 4: WASM Compilation -->
+        <div class="section hidden" id="wasmSection">
+            <h2 class="section-title">WASM Module</h2>
+            <p style="margin-bottom: 15px; color: #6c757d;">Your policy has been compiled to WebAssembly for high-performance execution.</p>
+            <div class="code-output" id="wasmStatus">
+                <span style="color: #98c379;">✓ WASM module compiled successfully</span><br>
+                <span style="color: #61afef;">Module size: <span id="moduleSize">0</span> bytes</span><br>
+                <span style="color: #61afef;">Optimization level: -O3</span>
+            </div>
+            <button onclick="generateTests()">Generate Test Cases</button>
+        </div>
+
+        <!-- Step 5: Testing -->
+        <div class="section hidden" id="testSection">
+            <h2 class="section-title">Test Cases & Validation</h2>
+            <p style="margin-bottom: 15px; color: #6c757d;">AI-generated test cases to validate your policy logic.</p>
+            <div class="button-group">
+                <button onclick="runTests()">Run All Tests</button>
+                <button onclick="addCustomTest()" class="secondary">Add Custom Test</button>
+                <button onclick="exportTests()" class="secondary">Export Test Suite</button>
+            </div>
+            <div class="test-results" id="testResults"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Simulated Small Language Model
+    class PolicyLanguageModel {
+        constructor() {
+            this.context = {};
+            this.fineTuned = false;
+        }
+
+        fineTune(contextDefinition) {
+            const lines = contextDefinition.trim().split('\n');
+            this.context = {};
+
+            lines.forEach(line => {
+                const match = line.match(/(\w+):\s*(\w+)\s*-\s*(.+)/);
+                if (match) {
+                    this.context[match[1]] = {
+                        type: match[2],
+                        description: match[3]
+                    };
+                }
+            });
+
+            this.fineTuned = true;
+            return this.context;
+        }
+
+        generateCode(policyText) {
+            if (!this.fineTuned) {
+                throw new Error("Model not fine-tuned. Please define context first.");
+            }
+
+            let code = `def evaluate_policy(${Object.keys(this.context).join(', ')}):\n`;
+            code += `    \"\"\"\n    Auto-generated policy evaluation function.\n`;
+            code += `    This function implements the business logic defined in natural language.\n    \"\"\"\n`;
+
+            // Parse policy text and generate conditions
+            const sentences = policyText.split(/\.\s*/);
+            let conditions = [];
+
+            sentences.forEach(sentence => {
+                if (sentence.toLowerCase().includes('if')) {
+                    const condition = this.parseCondition(sentence);
+                    if (condition) {
+                        conditions.push(condition);
+                    }
+                }
+            });
+
+            // Generate Python code from conditions
+            conditions.forEach((cond, index) => {
+                const prefix = index === 0 ? '    if ' : '    elif ';
+                code += `${prefix}${cond.condition}:\n`;
+                code += `        return ${cond.action}\n`;
+            });
+
+            code += `    else:\n`;
+            code += `        return {"status": "rejected", "reason": "Does not meet policy criteria"}\n`;
+
+            return code;
+        }
+
+        parseCondition(sentence) {
+            const lowerSentence = sentence.toLowerCase();
+            let pythonCondition = '';
+            let action = '';
+
+            // Extract conditions
+            const conditions = [];
+            Object.keys(this.context).forEach(field => {
+                if (lowerSentence.includes(field)) {
+                    // Parse different condition types
+                    const patterns = [
+                        new RegExp(`${field}\\s+is\\s+greater\\s+than\\s+(\\d+)`, 'i'),
+                        new RegExp(`${field}\\s+is\\s+above\\s+(\\d+)`, 'i'),
+                        new RegExp(`${field}\\s+>\\s+(\\d+)`, 'i'),
+                        new RegExp(`${field}\\s+is\\s+less\\s+than\\s+(\\d+)`, 'i'),
+                        new RegExp(`${field}\\s+is\\s+below\\s+(\\d+)`, 'i'),
+                        new RegExp(`${field}\\s+<\\s+(\\d+)`, 'i'),
+                        new RegExp(`${field}\\s+is\\s+between\\s+(\\d+)\\s+and\\s+(\\d+)`, 'i'),
+                        new RegExp(`${field}\\s+exceeds\\s+(\\d+)`, 'i'),
+                        new RegExp(`${field}\\s+is\\s+at\\s+least\\s+(\\d+)`, 'i')
+                    ];
+
+                    patterns.forEach(pattern => {
+                        const match = lowerSentence.match(pattern);
+                        if (match) {
+                            if (pattern.source.includes('greater') || pattern.source.includes('above') || pattern.source.includes('>')) {
+                                conditions.push(`${field} > ${match[1]}`);
+                            } else if (pattern.source.includes('less') || pattern.source.includes('below') || pattern.source.includes('<')) {
+                                conditions.push(`${field} < ${match[1]}`);
+                            } else if (pattern.source.includes('between')) {
+                                conditions.push(`${match[1]} <= ${field} <= ${match[2]}`);
+                            } else if (pattern.source.includes('exceeds')) {
+                                conditions.push(`${field} > ${match[1]}`);
+                            } else if (pattern.source.includes('at least')) {
+                                conditions.push(`${field} >= ${match[1]}`);
+                            }
+                        }
+                    });
+                }
+            });
+
+            // Determine action
+            if (lowerSentence.includes('approve')) {
+                action = '{"status": "approved", "message": "Policy conditions met"}';
+            } else if (lowerSentence.includes('reject')) {
+                action = '{"status": "rejected", "reason": "Policy conditions not met"}';
+            } else if (lowerSentence.includes('require')) {
+                action = '{"status": "conditional", "requirement": "Additional verification needed"}';
+            }
+
+            if (conditions.length > 0) {
+                pythonCondition = conditions.join(' and ');
+                return { condition: pythonCondition, action: action };
+            }
+
+            return null;
+        }
+
+        generateTestCases() {
+            const testCases = [];
+            const fields = Object.keys(this.context);
+
+            // Generate edge cases
+            testCases.push({
+                name: "Minimum values test",
+                data: this.generateTestData('min'),
+                expected: "rejected"
+            });
+
+            testCases.push({
+                name: "Maximum values test",
+                data: this.generateTestData('max'),
+                expected: "approved"
+            });
+
+            testCases.push({
+                name: "Average values test",
+                data: this.generateTestData('avg'),
+                expected: "approved"
+            });
+
+            testCases.push({
+                name: "Boundary test case",
+                data: this.generateTestData('boundary'),
+                expected: "conditional"
+            });
+
+            return testCases;
+        }
+
+        generateTestData(type) {
+            const data = {};
+            Object.keys(this.context).forEach(field => {
+                const fieldType = this.context[field].type;
+
+                switch(type) {
+                    case 'min':
+                        data[field] = fieldType === 'integer' ? 0 : 0.0;
+                        break;
+                    case 'max':
+                        data[field] = fieldType === 'integer' ? 1000 : 1000000.0;
+                        break;
+                    case 'avg':
+                        data[field] = fieldType === 'integer' ? 500 : 50000.0;
+                        break;
+                    case 'boundary':
+                        data[field] = fieldType === 'integer' ? 600 : 60000.0;
+                        break;
+                }
+
+                // Special cases for known fields
+                if (field === 'age') {
+                    data[field] = type === 'min' ? 18 : type === 'max' ? 65 : 35;
+                } else if (field === 'credit_score') {
+                    data[field] = type === 'min' ? 300 : type === 'max' ? 850 : 650;
+                } else if (field === 'debt_to_income') {
+                    data[field] = type === 'min' ? 0.0 : type === 'max' ? 1.0 : 0.3;
+                }
+            });
+
+            return data;
+        }
+    }
+
+    // Initialize the model
+    const model = new PolicyLanguageModel();
+    let currentStep = 1;
+    let generatedCode = '';
+    let wasmModule = null;
+
+    function updateStep(step) {
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+        for (let i = 1; i < step; i++) {
+            document.getElementById(`step${i}`).classList.add('completed');
+        }
+        document.getElementById(`step${step}`).classList.add('active');
+        currentStep = step;
+    }
+
+    function updateModelStatus(status, isProcessing = false) {
+        document.getElementById('modelStatus').textContent = status;
+        document.getElementById('loadingSpinner').classList.toggle('hidden', !isProcessing);
+
+        const indicator = document.querySelector('.status-indicator');
+        indicator.classList.remove('processing', 'ready', 'error');
+
+        if (isProcessing) {
+            indicator.classList.add('processing');
+        } else if (status.includes('Error')) {
+            indicator.classList.add('error');
+        } else {
+            indicator.classList.add('ready');
+        }
+    }
+
+    function processContext() {
+        updateModelStatus('Fine-tuning model with context...', true);
+
+        setTimeout(() => {
+            const contextInput = document.getElementById('contextInput').value;
+            if (!contextInput.trim()) {
+                updateModelStatus('Error: Please provide context definition');
+                return;
+            }
+
+            try {
+                const context = model.fineTune(contextInput);
+                displayGlossary(context);
+                updateModelStatus('Model fine-tuned successfully');
+                updateStep(2);
+            } catch (error) {
+                updateModelStatus('Error: ' + error.message);
+            }
+        }, 1500);
+    }
+
+    function displayGlossary(context) {
+        const glossaryDisplay = document.getElementById('glossaryDisplay');
+        glossaryDisplay.innerHTML = '';
+
+        Object.keys(context).forEach(field => {
+            const item = document.createElement('div');
+            item.className = 'glossary-item';
+            item.innerHTML = `
+                    <div class="glossary-field">${field}</div>
+                    <div class="glossary-type">Type: ${context[field].type}</div>
+                    <div>${context[field].description}</div>
+                `;
+            glossaryDisplay.appendChild(item);
+        });
+    }
+
+    function generateCode() {
+        updateModelStatus('Generating Python code...', true);
+
+        setTimeout(() => {
+            const policyInput = document.getElementById('policyInput').value;
+            if (!policyInput.trim()) {
+                updateModelStatus('Error: Please provide policy definition');
+                return;
+            }
+
+            try {
+                generatedCode = model.generateCode(policyInput);
+                displayCode(generatedCode);
+                updateModelStatus('Code generated successfully');
+                updateStep(3);
+            } catch (error) {
+                updateModelStatus('Error: ' + error.message);
+            }
+        }, 2000);
+    }
+
+    function displayCode(code) {
+        const codeOutput = document.getElementById('codeOutput');
+        // Store the raw code globally for copying
+        generatedCode = code;
+
+        // Simply display the code as plain text in a pre element
+        codeOutput.innerHTML = `<pre style="margin: 0; font-family: 'Courier New', Monaco, Menlo, monospace; color: #abb2bf; white-space: pre-wrap; word-wrap: break-word; line-height: 1.5;">${escapeHtml(code)}</pre>`;
+    }
+
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    function highlightSyntax(codeElement) {
+        // Removed - no longer needed
+    }
+
+    function copyCode() {
+        if (generatedCode) {
+            navigator.clipboard.writeText(generatedCode).then(() => {
+                // Visual feedback
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = '✓ Copied!';
+                button.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy code:', err);
+                alert('Failed to copy code. Please try selecting and copying manually.');
+            });
+        }
+    }
+
+    function editCode() {
+        const codeOutput = document.getElementById('codeOutput');
+        // Use the stored raw code, not the HTML content
+        codeOutput.innerHTML = `<textarea id="codeEditor" style="background: transparent; color: #abb2bf; border: none; width: 100%; min-height: 300px; font-family: 'Courier New', Monaco, Menlo, monospace; outline: none; line-height: 1.5;">${escapeHtml(generatedCode)}</textarea>
+            <div style="margin-top: 10px;">
+                <button onclick="saveEditedCode()" style="margin-right: 10px;">Save Changes</button>
+                <button onclick="cancelEdit()" class="secondary">Cancel</button>
+            </div>`;
+        document.getElementById('codeEditor').focus();
+    }
+
+    function saveEditedCode() {
+        const editedCode = document.getElementById('codeEditor').value;
+        generatedCode = editedCode;
+        displayCode(generatedCode);
+        updateModelStatus('Code updated successfully');
+    }
+
+    function cancelEdit() {
+        displayCode(generatedCode);
+    }
+
+    function validateCode() {
+        updateModelStatus('Validating Python syntax...', true);
+
+        setTimeout(() => {
+            // Simulated validation
+            updateModelStatus('✓ Code syntax is valid');
+        }, 1000);
+    }
+
+    function compileToWasm() {
+        updateModelStatus('Compiling to WebAssembly...', true);
+
+        setTimeout(() => {
+            // Simulate WASM compilation
+            wasmModule = {
+                size: Math.floor(Math.random() * 5000) + 2000,
+                exports: ['evaluate_policy'],
+                compiled: true
+            };
+
+            document.getElementById('moduleSize').textContent = wasmModule.size;
+            document.getElementById('wasmSection').classList.remove('hidden');
+            updateModelStatus('WASM compilation successful');
+            updateStep(4);
+        }, 2500);
+    }
+
+    function generateTests() {
+        updateModelStatus('Generating test cases...', true);
+
+        setTimeout(() => {
+            const testCases = model.generateTestCases();
+            displayTestCases(testCases);
+            document.getElementById('testSection').classList.remove('hidden');
+            updateModelStatus('Test cases generated successfully');
+            updateStep(5);
+        }, 2000);
+    }
+
+    function displayTestCases(testCases) {
+        const testResults = document.getElementById('testResults');
+        testResults.innerHTML = '<h3>Generated Test Cases:</h3>';
+
+        testCases.forEach((test, index) => {
+            const testDiv = document.createElement('div');
+            testDiv.className = 'test-case';
+            testDiv.innerHTML = `
+                    <strong>Test ${index + 1}: ${test.name}</strong><br>
+                    <span style="color: #6c757d;">Input Data:</span><br>
+                    <pre style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin: 10px 0;">${JSON.stringify(test.data, null, 2)}</pre>
+                    <span style="color: #6c757d;">Expected Result: </span><span style="color: #667eea; font-weight: bold;">${test.expected}</span>
+                    <div id="testResult${index}" style="margin-top: 10px;"></div>
+                `;
+            testResults.appendChild(testDiv);
+        });
+    }
+
+    function runTests() {
+        updateModelStatus('Running test suite...', true);
+        const testCases = model.generateTestCases();
+
+        setTimeout(() => {
+            testCases.forEach((test, index) => {
+                // Simulate test execution
+                const passed = Math.random() > 0.2;
+                const resultDiv = document.getElementById(`testResult${index}`);
+
+                if (passed) {
+                    resultDiv.innerHTML = `<span style="color: #28a745;">✓ Test passed</span>`;
+                    resultDiv.parentElement.style.borderLeftColor = '#28a745';
+                } else {
+                    resultDiv.innerHTML = `<span style="color: #dc3545;">✗ Test failed - Got: rejected</span>`;
+                    resultDiv.parentElement.classList.add('failed');
+                }
+            });
+
+            updateModelStatus('Test execution complete');
+        }, 1500);
+    }
+
+    function addCustomTest() {
+        const testResults = document.getElementById('testResults');
+        const customTestDiv = document.createElement('div');
+        customTestDiv.className = 'test-case';
+        customTestDiv.innerHTML = `
+                <strong>Custom Test Case</strong><br>
+                <textarea placeholder="Enter test data as JSON" style="margin: 10px 0; min-height: 100px;">
+{
+  "age": 30,
+  "income": 75000,
+  "credit_score": 720,
+  "loan_amount": 50000,
+  "employment_years": 5,
+  "debt_to_income": 0.25
+}</textarea>
+                <button onclick="runCustomTest(this)">Run This Test</button>
+            `;
+        testResults.appendChild(customTestDiv);
+    }
+
+    function runCustomTest(button) {
+        const textarea = button.previousElementSibling;
+        try {
+            const testData = JSON.parse(textarea.value);
+            updateModelStatus('Running custom test...', true);
+
+            setTimeout(() => {
+                const result = Math.random() > 0.5 ? 'approved' : 'rejected';
+                const resultDiv = document.createElement('div');
+                resultDiv.innerHTML = `<span style="color: ${result === 'approved' ? '#28a745' : '#dc3545'};">Result: ${result}</span>`;
+                button.parentElement.appendChild(resultDiv);
+                updateModelStatus('Custom test complete');
+            }, 1000);
+        } catch (error) {
+            alert('Invalid JSON format');
+        }
+    }
+
+    function exportTests() {
+        const testCases = model.generateTestCases();
+        const exportData = {
+            policy: document.getElementById('policyInput').value,
+            code: generatedCode,
+            testCases: testCases,
+            timestamp: new Date().toISOString()
+        };
+
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'policy_tests_' + Date.now() + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+
+        updateModelStatus('Test suite exported successfully');
+    }
+
+    // Add example data on load
+    window.addEventListener('load', () => {
+        // Pre-fill with example data for demonstration
+        document.getElementById('contextInput').value = `age: integer - The age of the applicant in years
+income: float - Annual income in USD
+credit_score: integer - Credit score ranging from 300 to 850
+loan_amount: float - Requested loan amount in USD
+employment_years: integer - Years at current employment
+debt_to_income: float - Ratio of monthly debt to monthly income`;
+
+        document.getElementById('policyInput').value = `If the applicant's age is greater than 18 and less than 65, and their credit score is above 650, approve the loan.
+If the credit score is between 600 and 650, approve only if the debt to income ratio is less than 0.4 and employment years is greater than 2.
+If the loan amount exceeds 100000, require a credit score of at least 700.
+Reject all applications where age is less than 18 or credit score is below 600.`;
+    });
+</script>
+</body>
+</html>
