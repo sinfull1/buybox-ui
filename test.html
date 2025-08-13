@@ -499,15 +499,22 @@
             <div class="model-selector">
                 <label for="modelSelect">Select Language Model:</label>
                 <select id="modelSelect">
-                    <option value="qwen-0.5b">Qwen 0.5B (Fastest, 500MB)</option>
-                    <option value="phi-3-mini">Phi-3 Mini (Better quality, 1.5GB)</option>
-                    <option value="gemma-2b">Gemma 2B (High quality, 2GB)</option>
-                    <option value="tinyllama-1b">TinyLlama 1.1B (Balanced, 1GB)</option>
+                    <option value="Llama-3.2-1B-Instruct-q4f16_1-MLC">Llama 3.2 1B (Recommended, 1GB)</option>
+                    <option value="TinyLlama-1.1B-Chat-v1.0-q4f16_1-MLC">TinyLlama 1.1B (Fast, 550MB)</option>
+                    <option value="Llama-3.2-3B-Instruct-q4f16_1-MLC">Llama 3.2 3B (Better quality, 1.7GB)</option>
+                    <option value="Phi-3.5-mini-instruct-q4f16_1-MLC">Phi-3.5 Mini (Microsoft, 2GB)</option>
+                    <option value="gemma-2-2b-it-q4f16_1-MLC">Gemma 2 2B (Google, 1.4GB)</option>
+                    <option value="Qwen2.5-0.5B-Instruct-q4f16_1-MLC">Qwen 2.5 0.5B (Smallest, 350MB)</option>
                 </select>
                 <button onclick="initializeModel()" style="margin-top: 10px;">Initialize Selected Model</button>
+                <button onclick="checkAvailableModels()" style="margin-top: 10px; margin-left: 10px;" class="secondary">Check Available Models</button>
                 <div class="progress-bar hidden" id="downloadProgress">
                     <div class="progress-fill" id="progressFill">0%</div>
                 </div>
+                <p style="margin-top: 15px; color: #6c757d; font-size: 0.9em;">
+                    <strong>Requirements:</strong> Modern browser (Chrome/Edge recommended) with WebGPU support.
+                    First-time model download may take a few minutes depending on size and connection speed.
+                </p>
             </div>
         </div>
 
@@ -531,7 +538,7 @@ debt_to_income: float - Ratio of monthly debt to monthly income"></textarea>
             <h2 class="section-title">Policy Definition</h2>
             <p style="margin-bottom: 15px; color: #6c757d;">Describe your policy logic in plain English. The AI model will convert this to executable Python code.</p>
             <textarea id="policyInput" placeholder="Example:
-If the applicant's age is greater than 18 and less than 65, and their credit score is above 650, approve the loan. 
+If the applicant's age is greater than 18 and less than 65, and their credit score is above 650, approve the loan.
 If the credit score is between 600 and 650, approve only if the debt to income ratio is less than 0.4 and employment years is greater than 2.
 If the loan amount exceeds 100000, require a credit score of at least 700.
 Reject all applications where age is less than 18 or credit score is below 600."></textarea>
@@ -592,6 +599,10 @@ Reject all applications where age is less than 18 or credit score is below 600."
     let currentStep = 1;
     let contextData = {};
 
+    // Make these available globally
+    window.engine = null;
+    window.modelLoaded = false;
+
     async function initializeModel() {
         const modelSelect = document.getElementById('modelSelect');
         const selectedModel = modelSelect.value;
@@ -602,19 +613,9 @@ Reject all applications where age is less than 18 or credit score is below 600."
         progressBar.classList.remove('hidden');
 
         try {
-            // Model mapping
-            const modelMap = {
-                'qwen-0.5b': 'Qwen2-0.5B-Instruct',
-                'phi-3-mini': 'Phi-3-mini-4k-instruct',
-                'gemma-2b': 'gemma-2b-it',
-                'tinyllama-1b': 'TinyLlama-1.1B-Chat-v1.0'
-            };
-
-            const actualModel = modelMap[selectedModel] || 'Qwen2-0.5B-Instruct';
-
-            // Create engine with progress callback
+            // Use the model ID directly from the select value
             engine = await webllm.CreateMLCEngine(
-                actualModel,
+                selectedModel,
                 {
                     initProgressCallback: (progress) => {
                         const percentage = Math.round(progress.progress * 100);
@@ -641,17 +642,22 @@ Reject all applications where age is less than 18 or credit score is below 600."
 
         } catch (error) {
             console.error('Model initialization error:', error);
-            updateModelStatus(`Error: Failed to load model - ${error.message}`);
+            updateModelStatus(`Error: ${error.message}`);
             progressBar.classList.add('hidden');
+
+            // Provide helpful error message
+            if (error.message.includes('Cannot find model')) {
+                alert('This model may not be available in your browser. Please try another model or check that you have a modern browser with WebGPU support.');
+            }
         }
     }
 
     async function generateWithAI(prompt) {
-        if (!engine || !modelLoaded) {
+        if (!window.engine || !window.modelLoaded) {
             throw new Error("Model not initialized. Please initialize a model first.");
         }
 
-        const chunks = await engine.chat.completions.create({
+        const chunks = await window.engine.chat.completions.create({
             messages: [{ role: "user", content: prompt }],
             temperature: 0.7,
             max_tokens: 1000,
