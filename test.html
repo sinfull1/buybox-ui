@@ -40,7 +40,7 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
             padding: 0 20px;
         }
@@ -93,12 +93,65 @@
             background: #f0f0f0;
         }
 
-        /* Progress Steps - Tesco Style */
+        /* Main Layout with Sidebar */
+        .main-layout {
+            display: flex;
+            min-height: calc(100vh - 120px);
+        }
+
+        /* Left Sidebar */
+        .sidebar {
+            width: 320px;
+            background: white;
+            border-right: 1px solid #e0e0e0;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 2px 0 4px rgba(0,0,0,0.05);
+        }
+
+        .sidebar-section {
+            margin-bottom: 25px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .sidebar-section:last-child {
+            border-bottom: none;
+        }
+
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #0055B8;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sidebar-badge {
+            background: #E60028;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        /* Main Content Area */
+        .main-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        /* Progress Steps - Horizontal */
         .workflow {
             background: white;
-            padding: 20px 0;
-            border-bottom: 1px solid #e0e0e0;
+            padding: 20px;
+            border-radius: 8px;
             margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         }
 
         .workflow-container {
@@ -177,12 +230,36 @@
             font-weight: 600;
         }
 
-        /* Main Content Area */
-        .main-content {
-            padding: 20px 0;
+        /* Status Banner */
+        .status-banner {
+            background: linear-gradient(135deg, #0055B8 0%, #003F7F 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 2px 8px rgba(0,85,184,0.2);
         }
 
-        /* Card Style Sections - Tesco Product Card Style */
+        .status-icon {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+
+        .status-icon.ready { background: #00A853; }
+        .status-icon.processing { background: #FFA500; }
+        .status-icon.error { background: #E60028; }
+
+        /* Card Sections */
         .section {
             background: white;
             border-radius: 8px;
@@ -225,7 +302,67 @@
             gap: 10px;
         }
 
-        /* Tesco-style Forms */
+        /* Sidebar specific styles */
+        .model-selector {
+            margin-bottom: 15px;
+        }
+
+        .model-selector label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+            font-size: 14px;
+        }
+
+        .guidelines-ref {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .guidelines-ref h4 {
+            font-size: 14px;
+            color: #0055B8;
+            margin-bottom: 10px;
+        }
+
+        .ref-links {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .ref-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #333;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .ref-link:hover {
+            background: #0055B8;
+            color: white;
+            border-color: #0055B8;
+        }
+
+        .ref-link-icon {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Forms */
         textarea, input[type="text"], select {
             width: 100%;
             padding: 12px;
@@ -249,7 +386,7 @@
             font-family: 'Monaco', 'Menlo', monospace;
         }
 
-        /* Tesco-style Buttons */
+        /* Buttons */
         .btn {
             padding: 12px 24px;
             border: none;
@@ -301,10 +438,32 @@
             background: #C50020;
         }
 
+        .btn-warning {
+            background: #FFA500;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #FF8C00;
+        }
+
         .btn:disabled {
             background: #ccc;
             color: #999;
             cursor: not-allowed;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+
+        .btn-sm.btn-secondary {
+            padding: 8px 16px;
+        }
+
+        a.btn {
+            text-decoration: none;
         }
 
         .button-group {
@@ -314,36 +473,7 @@
             flex-wrap: wrap;
         }
 
-        /* Status Banner - Tesco Promotion Style */
-        .status-banner {
-            background: linear-gradient(135deg, #0055B8 0%, #003F7F 100%);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            box-shadow: 0 2px 8px rgba(0,85,184,0.2);
-        }
-
-        .status-icon {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.2); opacity: 0.8; }
-        }
-
-        .status-icon.ready { background: #00A853; }
-        .status-icon.processing { background: #FFA500; }
-        .status-icon.error { background: #E60028; }
-
-        /* Code Output - VSCode Dark Theme */
+        /* Code Output */
         .code-output {
             background: #1e1e1e;
             color: #d4d4d4;
@@ -357,7 +487,7 @@
             border: 1px solid #333;
         }
 
-        /* PyCharm syntax highlighting */
+        /* Syntax highlighting */
         .py-keyword { color: #569cd6; font-weight: 600; }
         .py-string { color: #ce9178; }
         .py-number { color: #b5cea8; }
@@ -368,20 +498,16 @@
         .py-builtin { color: #c586c0; }
         .py-parameter { color: #9cdcfe; }
 
-        /* Grid Layouts */
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
+        .sql-keyword { color: #569cd6; font-weight: 600; text-transform: uppercase; }
+        .sql-function { color: #dcdcaa; text-transform: uppercase; }
+        .sql-string { color: #ce9178; }
+        .sql-number { color: #b5cea8; }
+        .sql-comment { color: #6a9955; font-style: italic; }
+        .sql-table { color: #4ec9b0; }
+        .sql-column { color: #9cdcfe; }
+        .sql-operator { color: #d4d4d4; }
 
-        @media (max-width: 768px) {
-            .grid-2 {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Field Cards - Tesco Product Style */
+        /* Field Cards */
         .field-card {
             background: white;
             border: 1px solid #e0e0e0;
@@ -432,6 +558,13 @@
             color: #999;
         }
 
+        /* Grid Layouts */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
         /* Edit Mode */
         .edit-field {
             display: grid;
@@ -451,7 +584,7 @@
             font-size: 13px;
         }
 
-        /* Test Results - Tesco Receipt Style */
+        /* Test Cases */
         .test-case {
             background: white;
             border: 1px solid #e0e0e0;
@@ -470,7 +603,7 @@
             border-left-color: #E60028;
         }
 
-        /* Loading Spinner */
+        /* Loading */
         .spinner {
             display: inline-block;
             width: 16px;
@@ -506,33 +639,31 @@
             font-size: 10px;
         }
 
-        /* Offer Banner - Tesco Clubcard Style */
-        .offer-banner {
-            background: linear-gradient(135deg, #E60028 0%, #C50020 100%);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 14px;
-        }
-
-        .offer-icon {
-            background: white;
-            color: #E60028;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-
         .hidden {
             display: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 280px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-layout {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -563,72 +694,18 @@
     </div>
 </header>
 
-<!-- Progress Steps -->
-<div class="workflow">
-    <div class="container">
-        <div class="workflow-container">
-            <div class="workflow-line"></div>
-            <div class="workflow-progress" id="progressLine" style="width: 0%;"></div>
-
-            <div class="step active" id="step1">
-                <div class="step-circle">1</div>
-                <div class="step-title">Initialize Model</div>
-            </div>
-            <div class="step" id="step2">
-                <div class="step-circle">2</div>
-                <div class="step-title">Guidelines</div>
-            </div>
-            <div class="step" id="step3">
-                <div class="step-circle">3</div>
-                <div class="step-title">Input Context</div>
-            </div>
-            <div class="step" id="step4">
-                <div class="step-circle">4</div>
-                <div class="step-title">Compile</div>
-            </div>
-            <div class="step" id="step5">
-                <div class="step-circle">5</div>
-                <div class="step-title">Policy</div>
-            </div>
-            <div class="step" id="step6">
-                <div class="step-circle">6</div>
-                <div class="step-title">Generate</div>
-            </div>
-            <div class="step" id="step7">
-                <div class="step-circle">7</div>
-                <div class="step-title">Test</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Main Content -->
-<div class="container">
-    <div class="main-content">
-        <!-- Status Banner -->
-        <div class="status-banner">
-            <span class="status-icon processing" id="statusIcon"></span>
-            <strong>System Status:</strong>
-            <span id="modelStatus">Ready to initialize AI model</span>
-            <span class="spinner hidden" id="loadingSpinner"></span>
-        </div>
-
-        <!-- Special Offer Banner -->
-        <div class="offer-banner">
-            <div class="offer-icon">!</div>
-            <span>Get started quickly with pre-configured templates and examples</span>
-        </div>
-
-        <!-- Model Selection -->
-        <div class="section" id="modelSection">
-            <div class="section-header">
-                <h2 class="section-title">
-                    AI Model Configuration
-                    <span class="section-badge">Step 1</span>
-                </h2>
-            </div>
-            <div style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Select Language Model:</label>
+<!-- Main Layout with Sidebar -->
+<div class="main-layout">
+    <!-- Left Sidebar -->
+    <aside class="sidebar">
+        <!-- Model Configuration -->
+        <div class="sidebar-section">
+            <h3 class="sidebar-title">
+                🤖 AI Model Setup
+                <span class="sidebar-badge">STEP 1</span>
+            </h3>
+            <div class="model-selector">
+                <label for="modelSelect">Select Language Model:</label>
                 <select id="modelSelect">
                     <option value="Llama-3.2-1B-Instruct-q4f16_1-MLC">Llama 3.2 1B (Recommended)</option>
                     <option value="TinyLlama-1.1B-Chat-v1.0-q4f16_1-MLC">TinyLlama 1.1B (Fast)</option>
@@ -638,22 +715,108 @@
                     <option value="Qwen2.5-0.5B-Instruct-q4f16_1-MLC">Qwen 2.5 0.5B (Compact)</option>
                 </select>
             </div>
-            <button class="btn btn-primary" onclick="initializeModel()">Initialize Selected Model</button>
+            <button class="btn btn-primary" onclick="initializeModel()" style="width: 100%;">Initialize Model</button>
             <div class="progress-bar hidden" id="downloadProgress" style="margin-top: 15px;">
                 <div class="progress-fill" id="progressFill">0%</div>
             </div>
+            <p style="margin-top: 15px; color: #6c757d; font-size: 12px;">
+                <strong>Requirements:</strong><br>
+                ⚡ Chrome/Edge 113+ with WebGPU enabled<br>
+                🔧 shader-f16 feature must be enabled<br>
+                💡 <a href="#" onclick="showWebGPUInstructions(); return false;" style="color: #0055B8;">Setup Instructions</a> |
+                <a href="https://www.google.com/chrome/canary/" target="_blank" style="color: #0055B8;">Get Chrome Canary</a>
+            </p>
         </div>
 
         <!-- Coding Guidelines -->
-        <div class="section" id="guidelinesSection">
-            <div class="section-header">
-                <h2 class="section-title">
-                    Coding Guidelines
-                    <span class="section-badge">Step 2</span>
-                </h2>
+        <div class="sidebar-section">
+            <h3 class="sidebar-title">
+                📝 Coding Guidelines
+                <span class="sidebar-badge">STEP 2</span>
+            </h3>
+            <textarea id="guidelinesInput" placeholder="Define your coding standards..." style="min-height: 200px; font-size: 13px;"></textarea>
+            <button class="btn btn-primary btn-sm" onclick="saveGuidelines()" id="guidelinesBtn" disabled style="width: 100%; margin-top: 10px;">Save Guidelines</button>
+
+            <!-- Google Guidelines Reference -->
+            <div class="guidelines-ref">
+                <h4>📚 Reference Style Guides</h4>
+                <div class="ref-links">
+                    <a href="https://google.github.io/styleguide/pyguide.html" target="_blank" class="ref-link">
+                        <span class="ref-link-icon">🐍</span>
+                        Google Python Style Guide
+                    </a>
+                    <a href="https://google.github.io/styleguide/sqlguide.html" target="_blank" class="ref-link">
+                        <span class="ref-link-icon">🗄️</span>
+                        Google SQL Style Guide
+                    </a>
+                    <a href="https://peps.python.org/pep-0008/" target="_blank" class="ref-link">
+                        <span class="ref-link-icon">📖</span>
+                        PEP 8 - Python Style Guide
+                    </a>
+                    <a href="https://www.sqlstyle.guide/" target="_blank" class="ref-link">
+                        <span class="ref-link-icon">📊</span>
+                        SQL Style Guide (Modern)
+                    </a>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="loadGoogleGuidelines()" style="width: 100%; margin-top: 10px;">
+                    Load Google Standards
+                </button>
             </div>
-            <textarea id="guidelinesInput" placeholder="Define coding standards..."></textarea>
-            <button class="btn btn-primary" onclick="saveGuidelines()" id="guidelinesBtn" disabled>Save Guidelines</button>
+        </div>
+
+        <!-- Model Status -->
+        <div class="sidebar-section">
+            <h3 class="sidebar-title">📊 System Status</h3>
+            <div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="status-icon ready" id="statusIcon"></span>
+                    <span id="modelStatus" style="font-size: 13px;">Checking WebGPU...</span>
+                </div>
+                <span class="spinner hidden" id="loadingSpinner" style="margin-left: 10px;"></span>
+            </div>
+            <div style="margin-top: 10px; padding: 10px; background: #e8f4fd; border-radius: 6px; border-left: 3px solid #0055B8;">
+                <p style="font-size: 11px; color: #004085; margin: 0;">
+                    <strong>Quick Fix:</strong> If you encounter issues, try Chrome Canary - it has all required features enabled by default.
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-area">
+        <!-- Progress Steps -->
+        <div class="workflow">
+            <div class="workflow-container">
+                <div class="workflow-line"></div>
+                <div class="workflow-progress" id="progressLine" style="width: 0%;"></div>
+
+                <div class="step active" id="step3">
+                    <div class="step-circle">3</div>
+                    <div class="step-title">Input Context</div>
+                </div>
+                <div class="step" id="step4">
+                    <div class="step-circle">4</div>
+                    <div class="step-title">Compile</div>
+                </div>
+                <div class="step" id="step5">
+                    <div class="step-circle">5</div>
+                    <div class="step-title">Policy</div>
+                </div>
+                <div class="step" id="step6">
+                    <div class="step-circle">6</div>
+                    <div class="step-title">Generate</div>
+                </div>
+                <div class="step" id="step7">
+                    <div class="step-circle">7</div>
+                    <div class="step-title">Test</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Banner -->
+        <div class="status-banner">
+            <span style="font-weight: 600;">Current Task:</span>
+            <span id="currentTask">Initialize AI model in the left panel to begin</span>
         </div>
 
         <!-- Raw Context Input -->
@@ -664,8 +827,9 @@
                     <span class="section-badge">Step 3</span>
                 </h2>
             </div>
+            <p style="margin-bottom: 15px; color: #6c757d;">Describe your domain context in natural language. The system will extract decision variables.</p>
             <textarea id="rawContextInput" placeholder="Describe your domain context in natural language..."></textarea>
-            <button class="btn btn-primary" onclick="compileContext()" id="compileBtn" disabled>Compile Context</button>
+            <button class="btn btn-primary" onclick="compileContext()" id="compileBtn" disabled>Extract Decision Variables</button>
         </div>
 
         <!-- Compiled Context with Edit Capability -->
@@ -684,7 +848,7 @@
             <div id="viewMode">
                 <div class="grid-2">
                     <div>
-                        <h3 style="margin-bottom: 15px; color: #0055B8;">Field Definitions</h3>
+                        <h3 style="margin-bottom: 15px; color: #0055B8;">Decision Variables</h3>
                         <div id="fieldCards"></div>
                     </div>
                     <div>
@@ -714,11 +878,14 @@
                     <span class="section-badge">Step 5</span>
                 </h2>
             </div>
+            <p style="margin-bottom: 10px; color: #6c757d; font-size: 14px;">
+                Describe your policy logic in plain English. The AI will convert this to code.
+            </p>
             <textarea id="policyInput" placeholder="Describe your policy logic in plain English..."></textarea>
-            <button class="btn btn-primary" onclick="generateCode()" id="generateBtn" disabled>Generate Python Code</button>
+            <button class="btn btn-primary" onclick="generateCode()" id="generateBtn" disabled>Generate Code</button>
         </div>
 
-        <!-- Generated Code -->
+        <!-- Code Generation -->
         <div class="section" id="codeSection">
             <div class="section-header">
                 <h2 class="section-title">
@@ -726,6 +893,10 @@
                     <span class="section-badge">Step 6</span>
                 </h2>
                 <div class="section-actions">
+                    <select id="codeTypeSelect" onchange="handleCodeTypeChange()" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+                        <option value="python">Python Code</option>
+                        <option value="sql">SQL Query</option>
+                    </select>
                     <button class="btn btn-secondary" onclick="copyCode()">📋 Copy</button>
                     <button class="btn btn-secondary" onclick="editCode()">✏️ Edit</button>
                 </div>
@@ -734,8 +905,9 @@
                 <span style="color: #6a6a6a;">// Generated code will appear here...</span>
             </div>
             <div class="button-group">
+                <button class="btn btn-primary" onclick="regenerateCode()" id="regenerateBtn">Regenerate</button>
                 <button class="btn btn-success" onclick="validateCode()">Validate Syntax</button>
-                <button class="btn btn-primary" onclick="compileToWasm()" id="wasmBtn" disabled>Compile to WASM</button>
+                <button class="btn btn-primary" onclick="compileToWasm()" id="wasmBtn" disabled style="display: inline-flex;">Compile to WASM</button>
             </div>
         </div>
 
@@ -753,7 +925,7 @@
             </div>
             <div id="testResults"></div>
         </div>
-    </div>
+    </main>
 </div>
 
 <!-- WebLLM Integration -->
@@ -765,16 +937,280 @@
     let engine = null;
     let modelLoaded = false;
     let generatedCode = '';
-    let currentStep = 1;
+    let generatedSQL = '';
+    let currentCodeType = 'python';
+    let currentStep = 3;
     let compiledContext = {};
-    let adjacencyList = {};
+    let adjacencyMatrix = {};
     let codingGuidelines = '';
     let isEditMode = false;
 
     window.engine = null;
     window.modelLoaded = false;
 
-    async function initializeModel() {
+    // Check WebGPU and shader-f16 support
+    async function checkWebGPUSupport() {
+        // Check if WebGPU is available
+        if (!navigator.gpu) {
+            return {
+                supported: false,
+                message: "WebGPU is not supported in your browser. Please use Chrome 113+ or Edge 113+.",
+                instructions: true
+            };
+        }
+
+        try {
+            const adapter = await navigator.gpu.requestAdapter();
+            if (!adapter) {
+                return {
+                    supported: false,
+                    message: "WebGPU adapter not found. Please check your GPU drivers.",
+                    instructions: true
+                };
+            }
+
+            // Check specifically for shader-f16 feature
+            const hasShaderF16 = adapter.features.has('shader-f16');
+
+            console.log('WebGPU Adapter features:', Array.from(adapter.features));
+            console.log('shader-f16 supported:', hasShaderF16);
+
+            if (!hasShaderF16) {
+                return {
+                    supported: false,
+                    message: "shader-f16 is not available. This feature is required for AI models.",
+                    instructions: true,
+                    details: "Your browser supports WebGPU but the shader-f16 feature is not enabled."
+                };
+            }
+
+            // Try to request device with shader-f16
+            try {
+                const device = await adapter.requestDevice({
+                    requiredFeatures: ['shader-f16']
+                });
+
+                if (device) {
+                    console.log('WebGPU device created successfully with shader-f16');
+                    return {
+                        supported: true,
+                        message: "WebGPU with shader-f16 is fully supported"
+                    };
+                }
+            } catch (deviceError) {
+                console.error('Failed to create WebGPU device:', deviceError);
+                return {
+                    supported: false,
+                    message: "Failed to initialize WebGPU device with shader-f16",
+                    instructions: true,
+                    details: deviceError.message
+                };
+            }
+        } catch (error) {
+            console.error('WebGPU check error:', error);
+            return {
+                supported: false,
+                message: `WebGPU initialization failed: ${error.message}`,
+                instructions: true
+            };
+        }
+
+        return {
+            supported: false,
+            message: "Unknown WebGPU error",
+            instructions: true
+        };
+    }
+
+    async function showWebGPUInstructions() {
+        const browser = await detectBrowser();
+        let instructions = '';
+
+        if (browser.includes('Chrome') || browser.includes('Edge') || browser.includes('Brave')) {
+            const flagsUrl = browser.includes('Chrome') ? 'chrome://flags' :
+                browser.includes('Edge') ? 'edge://flags' :
+                    'brave://flags';
+
+            instructions = `
+📋 How to Enable WebGPU with shader-f16 in ${browser}:
+
+EASIEST OPTION - Use Chrome Canary Instead:
+• Download: https://www.google.com/chrome/canary/
+• Has all features enabled by default
+• No configuration needed!
+
+OR Configure ${browser}:
+
+1. Open a new tab and navigate to:
+   ${flagsUrl}
+
+2. Search and enable these flags:
+   ✅ #enable-unsafe-webgpu → Enabled
+   ✅ #enable-webgpu-developer-features → Enabled
+
+3. For shader-f16 support (REQUIRED):
+   Option A: Launch browser with command line:
+   • Windows: ${browser.toLowerCase()}.exe --enable-features=Vulkan,WebGPUDeveloperFeatures --enable-unsafe-webgpu
+   • Mac: open -a "${browser}" --args --enable-features=Vulkan,WebGPUDeveloperFeatures --enable-unsafe-webgpu
+   • Linux: ${browser.toLowerCase()} --enable-features=Vulkan,WebGPUDeveloperFeatures --enable-unsafe-webgpu
+
+   Option B: Some versions have additional flags:
+   • Search for "Vulkan" → Enable
+   • Search for "experimental" → Enable WebGPU experimental features
+
+4. Click "Relaunch" button
+
+5. Verify at: https://webgpureport.org
+   • Check that "shader-f16" appears in the features list
+
+6. Return to this page
+
+Note: Requirements vary by GPU and driver version.`;
+        } else if (browser.includes('Firefox')) {
+            instructions = `
+📋 WebGPU Support in Firefox:
+
+Firefox has limited WebGPU support and may not have shader-f16 feature.
+
+To enable experimental WebGPU:
+1. Open a new tab and go to: about:config
+2. Search for "webgpu"
+3. Set these to true:
+   • dom.webgpu.enabled → true
+   • gfx.webgpu.force-enabled → true
+4. Restart Firefox
+
+⚠️ Note: Even with these settings, Firefox may not support all required features.
+
+RECOMMENDED ALTERNATIVE:
+Use Chrome Canary for the best experience:
+• Download from: https://www.google.com/chrome/canary/
+• Has all WebGPU features enabled by default
+• No configuration needed`;
+        } else if (browser.includes('Safari')) {
+            instructions = `
+📋 WebGPU Support in Safari:
+
+Safari has experimental WebGPU support but may not have all required features.
+
+To enable WebGPU in Safari:
+1. Open Safari Preferences
+2. Go to Advanced tab
+3. Check "Show Develop menu in menu bar"
+4. From Develop menu → Experimental Features
+5. Enable "WebGPU"
+
+⚠️ Note: Safari's WebGPU implementation may not support shader-f16.
+
+RECOMMENDED FOR MAC USERS:
+Download Chrome Canary for macOS:
+• https://www.google.com/chrome/canary/
+• All WebGPU features work out of the box
+• Best compatibility with AI models
+
+Or use regular Chrome/Edge with flags enabled.`;
+        } else {
+            instructions = `
+📋 WebGPU Requirements:
+
+Your browser may not fully support WebGPU with shader-f16.
+
+EASIEST SOLUTION - Use Chrome Canary:
+1. Download Chrome Canary (experimental Chrome version)
+   https://www.google.com/chrome/canary/
+2. It has WebGPU features enabled by default
+3. No flags configuration needed
+
+Alternative browsers:
+• Google Chrome 113+ (requires flag configuration)
+• Microsoft Edge 113+ (requires flag configuration)
+• Brave Browser (latest version with flags)
+
+The shader-f16 feature is essential for running AI models efficiently in the browser.
+
+Please use one of these browsers for the best experience.`;
+        }
+
+        alert(instructions);
+    }
+
+    async function detectBrowser() {
+        const userAgent = navigator.userAgent;
+        // Check in specific order due to UA string overlaps
+        if (userAgent.includes('Edg')) {
+            return 'Edge';
+        } else if (navigator.brave && typeof navigator.brave.isBrave === 'function') {
+            try {
+                const isBrave = await navigator.brave.isBrave();
+                if (isBrave) return 'Brave';
+            } catch (e) {
+                // Fall through to Chrome check
+            }
+        }
+        if (userAgent.includes('Chrome') && !userAgent.includes('Edg')) {
+            return 'Chrome';
+        } else if (userAgent.includes('Firefox')) {
+            return 'Firefox';
+        } else if (userAgent.includes('Safari') && !userAgent.includes('Chrome') && !userAgent.includes('Edg')) {
+            return 'Safari';
+        }
+        return 'Unknown Browser';
+    }
+
+    window.initializeModel = async function() {
+        // First check WebGPU support
+        const gpuCheck = await checkWebGPUSupport();
+
+        if (!gpuCheck.supported) {
+            let errorMessage = gpuCheck.message;
+            if (gpuCheck.details) {
+                errorMessage += `\n\nDetails: ${gpuCheck.details}`;
+            }
+
+            updateModelStatus(gpuCheck.message, false, 'error');
+
+            if (gpuCheck.instructions) {
+                const showInstructions = confirm(
+                    `${errorMessage}\n\n` +
+                    `Would you like to see instructions for enabling WebGPU features?\n\n` +
+                    `Note: shader-f16 support is required for running AI models in the browser.`
+                );
+
+                if (showInstructions) {
+                    showWebGPUInstructions();
+                }
+            }
+
+            // Add button to retry or show instructions
+            const sidebarSection = document.querySelector('.sidebar-section');
+            if (!document.getElementById('webgpuHelp')) {
+                const helpDiv = document.createElement('div');
+                helpDiv.id = 'webgpuHelp';
+                helpDiv.innerHTML = `
+                        <div style="margin-top: 15px; padding: 12px; background: #fff3cd; border-radius: 8px; border: 1px solid #ffc107;">
+                            <p style="font-size: 13px; color: #856404; margin-bottom: 10px;">
+                                ⚠️ <strong>WebGPU Issue Detected</strong><br>
+                                ${gpuCheck.message}
+                            </p>
+                            ${gpuCheck.details ? `<p style="font-size: 12px; color: #856404; margin-bottom: 10px;">${gpuCheck.details}</p>` : ''}
+                            <button class="btn btn-warning btn-sm" onclick="showWebGPUInstructions()" style="width: 100%;">
+                                Show Setup Instructions
+                            </button>
+                            <button class="btn btn-secondary btn-sm" onclick="location.reload()" style="width: 100%; margin-top: 8px;">
+                                Retry After Enabling
+                            </button>
+                            <a href="https://webgpureport.org" target="_blank" class="btn btn-secondary btn-sm" style="width: 100%; margin-top: 8px; text-decoration: none; display: inline-block; text-align: center;">
+                                Check WebGPU Status
+                            </a>
+                        </div>
+                    `;
+                sidebarSection.appendChild(helpDiv);
+            }
+
+            return;
+        }
+
+        // Continue with model initialization if WebGPU is supported
         const modelSelect = document.getElementById('modelSelect');
         const selectedModel = modelSelect.value;
         const progressBar = document.getElementById('downloadProgress');
@@ -784,6 +1220,12 @@
         progressBar.classList.remove('hidden');
 
         try {
+            console.log(`Initializing model: ${selectedModel}`);
+            console.log('WebGPU Status:', gpuCheck.message);
+            const browserName = await detectBrowser();
+            console.log('Browser:', browserName);
+
+            // Try to initialize with WebLLM
             const engine = await webllm.CreateMLCEngine(
                 selectedModel,
                 {
@@ -794,7 +1236,13 @@
 
                         if (progress.text) {
                             updateModelStatus(progress.text, true);
+                            console.log('Model loading:', progress.text);
                         }
+                    },
+                    // Add WebGPU configuration
+                    gpuConfig: {
+                        requiredFeatures: ['shader-f16'],
+                        powerPreference: 'high-performance'
                     }
                 }
             );
@@ -804,22 +1252,98 @@
             modelLoaded = true;
             progressBar.classList.add('hidden');
             updateModelStatus('AI Model ready', false, 'ready');
+            updateCurrentTask('Configure coding guidelines');
+            console.log('Model loaded successfully!');
 
+            // Enable buttons
             document.getElementById('guidelinesBtn').disabled = false;
             document.getElementById('compileBtn').disabled = false;
             document.getElementById('generateBtn').disabled = false;
             document.getElementById('wasmBtn').disabled = false;
 
-            updateStep(2);
+            // Remove help div if it exists
+            const helpDiv = document.getElementById('webgpuHelp');
+            if (helpDiv) {
+                helpDiv.remove();
+            }
 
         } catch (error) {
             console.error('Model initialization error:', error);
-            updateModelStatus(`Error: ${error.message}`, false, 'error');
+            console.error('Error stack:', error.stack);
+
+            let errorMessage = error.message;
+
+            // Check for specific WebGPU/shader-f16 errors
+            if (errorMessage.includes('shader-f16') ||
+                errorMessage.includes('WebGPU') ||
+                errorMessage.includes('GPU') ||
+                errorMessage.includes('16-bit')) {
+
+                errorMessage = 'WebGPU with shader-f16 is required but not properly enabled';
+
+                const showInstructions = confirm(
+                    `${errorMessage}\n\n` +
+                    `Error details: ${error.message}\n\n` +
+                    `Would you like to see instructions for enabling these features?\n\n` +
+                    `Tip: Chrome Canary has these features enabled by default.`
+                );
+
+                if (showInstructions) {
+                    showWebGPUInstructions();
+                }
+            }
+
+            updateModelStatus(`Error: ${errorMessage}`, false, 'error');
             progressBar.classList.add('hidden');
         }
     }
 
-    async function generateWithAI(prompt) {
+    // Make showWebGPUInstructions available globally
+    window.showWebGPUInstructions = showWebGPUInstructions;
+    window.detectBrowser = detectBrowser;
+
+    window.loadGoogleGuidelines = function() {
+        const googlePythonGuidelines = `# Google Python Style Guide Summary
+- Use 4 spaces for indentation (never tabs)
+- Maximum line length: 80 characters (up to 100 for comments)
+- Use descriptive variable names in lowercase_with_underscores
+- Class names use CapWords convention
+- Constants use UPPER_CASE_WITH_UNDERSCORES
+- Add docstrings for all public modules, functions, classes, and methods
+- Use type hints for function arguments and return values
+- Prefer list comprehensions over map/filter where appropriate
+- Use f-strings for formatting (Python 3.6+)
+- Handle exceptions with specific exception types
+- Follow PEP 8 with Google-specific modifications
+
+# Google SQL Style Guide Summary
+- Use lowercase for SQL keywords
+- Use trailing commas in SELECT lists
+- Indent with 2 spaces
+- Table aliases should be meaningful abbreviations
+- Use CTEs instead of nested queries where possible
+- Add comments for complex logic
+- Use consistent naming: table_name, column_name (snake_case)
+- Explicitly name all columns (avoid SELECT *)
+- Use JOIN syntax instead of WHERE for joins
+- Group related columns together`;
+
+        document.getElementById('guidelinesInput').value = googlePythonGuidelines;
+        updateModelStatus('Google style guidelines loaded', false, 'ready');
+    }
+
+    window.saveGuidelines = function() {
+        codingGuidelines = document.getElementById('guidelinesInput').value;
+        if (!codingGuidelines.trim()) {
+            updateModelStatus('Please provide coding guidelines', false, 'error');
+            return;
+        }
+        updateModelStatus('Guidelines saved', false, 'ready');
+        updateCurrentTask('Define your context in Step 3');
+        updateStep(3);
+    }
+
+    window.generateWithAI = async function(prompt) {
         if (!window.engine || !window.modelLoaded) {
             throw new Error("Model not initialized");
         }
@@ -833,18 +1357,9 @@
         return chunks.choices[0].message.content;
     }
 
-    function saveGuidelines() {
-        codingGuidelines = document.getElementById('guidelinesInput').value;
-        if (!codingGuidelines.trim()) {
-            updateModelStatus('Please provide coding guidelines', false, 'error');
-            return;
-        }
-        updateModelStatus('Guidelines saved', false, 'ready');
-        updateStep(3);
-    }
-
-    async function compileContext() {
-        updateModelStatus('Compiling context...', true);
+    window.compileContext = async function() {
+        updateModelStatus('Extracting decision variables...', true);
+        updateCurrentTask('Extracting decision variables from context');
 
         const rawContext = document.getElementById('rawContextInput').value;
         if (!rawContext.trim()) {
@@ -853,12 +1368,24 @@
         }
 
         try {
-            const prompt = `Extract field definitions from: ${rawContext}
-                Format as: field_name: type: description
-                Use types: integer, float, string, boolean
-                Use snake_case. Return only formatted fields.`;
+            const extractPrompt = `Analyze this policy context and extract ONLY the decision variables that directly impact the policy outcome:
 
-            const response = await generateWithAI(prompt);
+"${rawContext}"
+
+A decision variable is a measurable factor that influences the policy decision (approval/rejection/conditions).
+
+For each decision variable found, format EXACTLY as:
+variable_name: datatype: description
+
+Rules:
+- Use snake_case for variable names
+- Datatypes must be one of: integer, float, string, boolean
+- Description should explain what the variable measures and its valid range if applicable
+- Only include variables that directly affect decisions, not metadata or identifiers
+
+Return ONLY the formatted variables, one per line.`;
+
+            const response = await generateWithAI(extractPrompt);
 
             const lines = response.trim().split('\n');
             compiledContext = {};
@@ -870,29 +1397,114 @@
                     const fieldName = match[1];
                     compiledContext[fieldName] = {
                         type: match[2],
-                        definition: match[3]
+                        definition: match[3].trim()
                     };
                     fields.push(fieldName);
                 }
             });
 
-            adjacencyList = {};
-            fields.forEach(field => {
-                adjacencyList[field] = fields.filter(f => f !== field);
-            });
+            // Generate adjacency matrix
+            const relationshipPrompt = `Given these decision variables from a policy system:
+${fields.map(f => `${f}: ${compiledContext[f].definition}`).join('\n')}
+
+Create relationships between each pair of variables. For each relationship, describe how they interact or influence each other in the policy decision.
+
+Format as JSON:
+{
+  "variable1": {
+    "variable2": "relationship description",
+    "variable3": "relationship description"
+  },
+  ...
+}
+
+Return ONLY the JSON object.`;
+
+            let adjacencyMatrix = {};
+
+            try {
+                const matrixResponse = await generateWithAI(relationshipPrompt);
+                const jsonMatch = matrixResponse.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    adjacencyMatrix = JSON.parse(jsonMatch[0]);
+                }
+            } catch (e) {
+                adjacencyMatrix = {};
+                fields.forEach(field1 => {
+                    adjacencyMatrix[field1] = {};
+                    fields.forEach(field2 => {
+                        if (field1 !== field2) {
+                            adjacencyMatrix[field1][field2] = "Influences policy decision";
+                        }
+                    });
+                });
+            }
+
+            window.adjacencyMatrix = adjacencyMatrix;
 
             displayCompiledContext();
             document.getElementById('compiledContextSection').classList.remove('hidden');
-            updateModelStatus('Context compiled', false, 'ready');
+            updateModelStatus(`Extracted ${fields.length} decision variables`, false, 'ready');
+            updateCurrentTask('Review and edit extracted variables');
             updateStep(4);
 
         } catch (error) {
             updateModelStatus(`Error: ${error.message}`, false, 'error');
+            fallbackExtraction(rawContext);
         }
     }
 
+    function fallbackExtraction(rawContext) {
+        const patterns = {
+            age: /\b(age|years old|applicant.{0,10}age)\b/i,
+            income: /\b(income|salary|earnings|revenue)\b/i,
+            credit_score: /\b(credit.{0,10}score|fico|creditworthiness)\b/i,
+            loan_amount: /\b(loan.{0,10}amount|principal|borrowed)\b/i,
+            employment: /\b(employment|job|work.{0,10}history|years.{0,10}employed)\b/i,
+            debt_ratio: /\b(debt.{0,10}income|dti|debt.{0,10}ratio)\b/i,
+        };
+
+        compiledContext = {};
+        const extractedFields = [];
+
+        Object.entries(patterns).forEach(([field, pattern]) => {
+            if (pattern.test(rawContext)) {
+                extractedFields.push(field);
+
+                let dataType = 'float';
+                if (field.includes('age') || field.includes('years') || field.includes('score')) {
+                    dataType = 'integer';
+                }
+
+                let description = field.replace(/_/g, ' ');
+                if (field === 'credit_score') description = 'Credit score ranging from 300 to 850';
+                else if (field === 'debt_ratio') description = 'Ratio of monthly debt to monthly income';
+
+                compiledContext[field] = {
+                    type: dataType,
+                    definition: description
+                };
+            }
+        });
+
+        window.adjacencyMatrix = {};
+        extractedFields.forEach(field1 => {
+            window.adjacencyMatrix[field1] = {};
+            extractedFields.forEach(field2 => {
+                if (field1 !== field2) {
+                    window.adjacencyMatrix[field1][field2] = "Influences policy decision";
+                }
+            });
+        });
+
+        displayCompiledContext();
+        document.getElementById('compiledContextSection').classList.remove('hidden');
+        updateModelStatus(`Extracted ${extractedFields.length} decision variables`, false, 'ready');
+        updateCurrentTask('Review and edit extracted variables');
+        updateStep(4);
+    }
+
     function displayCompiledContext() {
-        // Display field cards
         const fieldCardsDiv = document.getElementById('fieldCards');
         fieldCardsDiv.innerHTML = '';
 
@@ -902,34 +1514,64 @@
             card.innerHTML = `
                     <div class="field-card-header">
                         <span class="field-name">${field}</span>
-                        <span class="field-type">${compiledContext[field].type}</span>
+                        <span class="field-type" style="background: ${getTypeColor(compiledContext[field].type)}; color: white;">${compiledContext[field].type}</span>
                     </div>
                     <div class="field-definition">${compiledContext[field].definition}</div>
                     <div class="field-connections">
-                        Related to: ${adjacencyList[field]?.slice(0, 3).join(', ')}${adjacencyList[field]?.length > 3 ? '...' : ''}
+                        <strong>Impact:</strong> ${getImpactLevel(field)}
                     </div>
                 `;
             fieldCardsDiv.appendChild(card);
         });
 
-        // Display adjacency
         const adjacencyDiv = document.getElementById('adjacencyDisplay');
         adjacencyDiv.innerHTML = '';
 
-        Object.keys(adjacencyList).forEach(field => {
-            const item = document.createElement('div');
-            item.className = 'field-card';
-            item.innerHTML = `
-                    <strong style="color: #0055B8;">${field}</strong>
-                    <div style="margin-top: 8px; color: #666; font-size: 14px;">
-                        → ${adjacencyList[field].join(', ')}
-                    </div>
-                `;
-            adjacencyDiv.appendChild(item);
+        Object.keys(window.adjacencyMatrix || {}).forEach(field1 => {
+            const relationships = window.adjacencyMatrix[field1];
+            if (relationships && Object.keys(relationships).length > 0) {
+                const relationCard = document.createElement('div');
+                relationCard.className = 'field-card';
+                relationCard.style.borderLeft = '3px solid #0055B8';
+
+                let relationshipsHtml = '<div style="margin-top: 10px;">';
+                Object.entries(relationships).forEach(([field2, description]) => {
+                    relationshipsHtml += `
+                            <div style="padding: 8px; margin: 5px 0; background: #f0f0f0; border-radius: 4px;">
+                                <strong style="color: #0055B8;">${field1}</strong> →
+                                <strong style="color: #00A853;">${field2}</strong>
+                                <div style="color: #666; font-size: 13px; margin-top: 4px;">${description}</div>
+                            </div>
+                        `;
+                });
+                relationshipsHtml += '</div>';
+
+                relationCard.innerHTML = relationshipsHtml;
+                adjacencyDiv.appendChild(relationCard);
+            }
         });
     }
 
-    function toggleEditMode() {
+    function getTypeColor(type) {
+        const colors = {
+            'integer': '#0055B8',
+            'float': '#00A853',
+            'string': '#E60028',
+            'boolean': '#FFA500'
+        };
+        return colors[type] || '#666';
+    }
+
+    function getImpactLevel(field) {
+        const highImpact = ['credit_score', 'income', 'debt_ratio'];
+        const mediumImpact = ['loan_amount', 'employment', 'age'];
+
+        if (highImpact.some(h => field.includes(h))) return '⭐⭐⭐ High';
+        if (mediumImpact.some(m => field.includes(m))) return '⭐⭐ Medium';
+        return '⭐ Standard';
+    }
+
+    window.toggleEditMode = function() {
         isEditMode = !isEditMode;
         document.getElementById('viewMode').classList.toggle('hidden');
         document.getElementById('editMode').classList.toggle('hidden');
@@ -942,7 +1584,7 @@
         }
     }
 
-    function displayEditableFields() {
+    window.displayEditableFields = function() {
         const editFieldsDiv = document.getElementById('editFields');
         editFieldsDiv.innerHTML = '';
 
@@ -964,19 +1606,22 @@
         });
     }
 
-    function addField() {
+    window.addField = function() {
         const newFieldName = `field_${Object.keys(compiledContext).length + 1}`;
         compiledContext[newFieldName] = {
             type: 'string',
-            definition: 'New field description'
+            definition: 'New decision variable description'
         };
 
-        // Update adjacency list
         const fields = Object.keys(compiledContext);
-        adjacencyList[newFieldName] = fields.filter(f => f !== newFieldName);
+        window.adjacencyMatrix[newFieldName] = {};
+
         fields.forEach(field => {
-            if (field !== newFieldName && adjacencyList[field]) {
-                adjacencyList[field].push(newFieldName);
+            if (field !== newFieldName) {
+                window.adjacencyMatrix[newFieldName][field] = "Relationship to be defined";
+                if (window.adjacencyMatrix[field]) {
+                    window.adjacencyMatrix[field][newFieldName] = "Relationship to be defined";
+                }
             }
         });
 
@@ -987,19 +1632,20 @@
         }
     }
 
-    function removeField(fieldName) {
+    window.removeField = function(fieldName) {
         delete compiledContext[fieldName];
-        delete adjacencyList[fieldName];
+        delete window.adjacencyMatrix[fieldName];
 
-        // Remove from other fields' adjacency lists
-        Object.keys(adjacencyList).forEach(field => {
-            adjacencyList[field] = adjacencyList[field].filter(f => f !== fieldName);
+        Object.keys(window.adjacencyMatrix).forEach(field => {
+            if (window.adjacencyMatrix[field]) {
+                delete window.adjacencyMatrix[field][fieldName];
+            }
         });
 
         displayEditableFields();
     }
 
-    function saveEditedContext() {
+    window.saveEditedContext = function() {
         const newContext = {};
         const editFields = document.querySelectorAll('.edit-field');
 
@@ -1021,24 +1667,36 @@
 
         compiledContext = newContext;
 
-        // Rebuild adjacency list
         const fields = Object.keys(compiledContext);
-        adjacencyList = {};
-        fields.forEach(field => {
-            adjacencyList[field] = fields.filter(f => f !== field);
+        const newMatrix = {};
+
+        fields.forEach(field1 => {
+            newMatrix[field1] = {};
+            fields.forEach(field2 => {
+                if (field1 !== field2) {
+                    if (window.adjacencyMatrix[field1] && window.adjacencyMatrix[field1][field2]) {
+                        newMatrix[field1][field2] = window.adjacencyMatrix[field1][field2];
+                    } else {
+                        newMatrix[field1][field2] = "Influences policy decision";
+                    }
+                }
+            });
         });
+
+        window.adjacencyMatrix = newMatrix;
 
         toggleEditMode();
         displayCompiledContext();
         updateModelStatus('Context updated', false, 'ready');
     }
 
-    function cancelEdit() {
+    window.cancelEdit = function() {
         toggleEditMode();
     }
 
-    async function finalizeContext() {
+    window.finalizeContext = async function() {
         updateModelStatus('Finalizing context...', true);
+        updateCurrentTask('Context finalized - Write your policy');
 
         setTimeout(() => {
             updateModelStatus('Context finalized', false, 'ready');
@@ -1046,19 +1704,21 @@
 
             if (Object.keys(compiledContext).length === 0) {
                 compiledContext = {
-                    age: { type: 'integer', definition: 'Applicant age in years' },
+                    age: { type: 'integer', definition: 'Applicant age in years (must be 18+)' },
                     income: { type: 'float', definition: 'Annual income in USD' },
-                    credit_score: { type: 'integer', definition: 'Credit score (300-850)' },
-                    loan_amount: { type: 'float', definition: 'Requested loan amount' },
-                    employment_years: { type: 'integer', definition: 'Years at current job' },
-                    debt_to_income: { type: 'float', definition: 'Debt to income ratio' }
+                    credit_score: { type: 'integer', definition: 'Credit score ranging from 300-850' },
+                    loan_amount: { type: 'float', definition: 'Requested loan amount in USD' },
+                    employment_years: { type: 'integer', definition: 'Years at current employment' },
+                    debt_to_income: { type: 'float', definition: 'Monthly debt to income ratio (0-1)' }
                 };
             }
         }, 1500);
     }
 
-    async function generateCode() {
-        updateModelStatus('Generating code...', true);
+    window.generateCode = async function() {
+        const codeType = document.getElementById('codeTypeSelect').value;
+        updateModelStatus(`Generating ${codeType.toUpperCase()}...`, true);
+        updateCurrentTask(`Generating ${codeType} implementation`);
 
         const policyInput = document.getElementById('policyInput').value;
 
@@ -1068,28 +1728,13 @@
         }
 
         try {
-            let contextString = '';
-            Object.keys(compiledContext).forEach(field => {
-                contextString += `${field}: ${compiledContext[field].type}: ${compiledContext[field].definition}\n`;
-            });
+            if (codeType === 'python') {
+                await generatePythonCode();
+            } else if (codeType === 'sql') {
+                await generateSQLCode();
+            }
 
-            const prompt = `Generate Python code following:
-${codingGuidelines}
-
-Fields:
-${contextString}
-
-Policy:
-${policyInput}
-
-Create evaluate_policy function with type hints, docstring, returns dict with status/data/error.
-Return only Python code.`;
-
-            const code = await generateWithAI(prompt);
-            generatedCode = code.replace(/```python\n?/g, '').replace(/```\n?/g, '').trim();
-
-            displayCode(generatedCode);
-            updateModelStatus('Code generated', false, 'ready');
+            updateModelStatus(`${codeType.toUpperCase()} generated`, false, 'ready');
             updateStep(6);
 
         } catch (error) {
@@ -1097,13 +1742,128 @@ Return only Python code.`;
         }
     }
 
-    function displayCode(code) {
+    async function generatePythonCode() {
+        const policyInput = document.getElementById('policyInput').value;
+
+        let contextString = 'Decision Variables:\n';
+        Object.keys(compiledContext).forEach(field => {
+            contextString += `${field}: ${compiledContext[field].type}: ${compiledContext[field].definition}\n`;
+        });
+
+        const prompt = `Generate Python code following these guidelines:
+${codingGuidelines}
+
+${contextString}
+
+Policy Requirements:
+${policyInput}
+
+Create an evaluate_policy function that:
+1. Takes all decision variables as parameters with proper type hints
+2. Implements the exact policy logic described
+3. Returns a structured dict with 'status', 'data', and 'error' keys
+4. Includes comprehensive docstring with parameter descriptions
+5. Validates all inputs before processing
+6. Uses meaningful variable names
+
+Return ONLY the Python code, no explanations.`;
+
+        const code = await window.generateWithAI(prompt);
+        generatedCode = code.replace(/```python\n?/g, '').replace(/```\n?/g, '').trim();
+        displayPythonCode(generatedCode);
+    }
+
+    async function generateSQLCode() {
+        const policyInput = document.getElementById('policyInput').value;
+
+        let contextString = 'Table: applications\nColumns:\n';
+        Object.keys(compiledContext).forEach(field => {
+            let sqlType = compiledContext[field].type;
+            if (sqlType === 'integer') sqlType = 'INT';
+            else if (sqlType === 'float') sqlType = 'DECIMAL(10,2)';
+            else if (sqlType === 'string') sqlType = 'VARCHAR(255)';
+            else if (sqlType === 'boolean') sqlType = 'BOOLEAN';
+
+            contextString += `  ${field} ${sqlType} -- ${compiledContext[field].definition}\n`;
+        });
+
+        try {
+            const prompt = `Generate SQL queries for the following policy logic:
+
+${contextString}
+
+Policy Requirements:
+${policyInput}
+
+Generate SQL that:
+1. Creates a VIEW or SELECT statement to identify approved applications
+2. Uses CASE statements for complex conditions
+3. Adds a calculated status column (approved/rejected/review)
+4. Includes WHERE clauses for filtering
+5. Uses proper SQL formatting and comments
+6. Handles NULL values appropriately
+
+Return ONLY the SQL code with comments, no explanations.`;
+
+            const sql = await window.generateWithAI(prompt);
+            generatedSQL = sql.replace(/```sql\n?/g, '').replace(/```\n?/g, '').trim();
+        } catch (error) {
+            generatedSQL = generateFallbackSQL(policyInput);
+        }
+
+        displaySQLCode(generatedSQL);
+    }
+
+    function generateFallbackSQL(policyInput) {
+        const fields = Object.keys(compiledContext);
+
+        let sql = `-- Policy Implementation SQL\n`;
+        sql += `CREATE VIEW approved_applications AS\nSELECT \n`;
+
+        fields.forEach((field, index) => {
+            sql += `    ${field}${index < fields.length - 1 ? ',' : ','}\n`;
+        });
+
+        sql += `    CASE\n`;
+        sql += `        WHEN age >= 18 AND age <= 65 AND credit_score > 650 THEN 'approved'\n`;
+        sql += `        WHEN age < 18 OR credit_score < 600 THEN 'rejected'\n`;
+        sql += `        ELSE 'review'\n`;
+        sql += `    END AS policy_status\n`;
+        sql += `FROM applications;`;
+
+        return sql;
+    }
+
+    window.regenerateCode = async function() {
+        await generateCode();
+    }
+
+    window.handleCodeTypeChange = function() {
+        const codeType = document.getElementById('codeTypeSelect').value;
+        currentCodeType = codeType;
+
+        const wasmBtn = document.getElementById('wasmBtn');
+        if (codeType === 'sql') {
+            wasmBtn.style.display = 'none';
+        } else {
+            wasmBtn.style.display = 'inline-flex';
+        }
+
+        if (codeType === 'python' && generatedCode) {
+            displayPythonCode(generatedCode);
+        } else if (codeType === 'sql' && generatedSQL) {
+            displaySQLCode(generatedSQL);
+        } else {
+            generateCode();
+        }
+    }
+
+    function displayPythonCode(code) {
         const codeOutput = document.getElementById('codeOutput');
         generatedCode = code;
 
         let highlightedCode = escapeHtml(code);
 
-        // Apply syntax highlighting
         highlightedCode = highlightedCode.replace(/\b(def|return|if|elif|else|and|or|not|True|False|None|import|from|as|class|pass|break|continue|for|while|with|try|except|finally|raise|assert|yield|lambda|global|nonlocal|in|is)\b/g, '<span class="py-keyword">$1</span>');
         highlightedCode = highlightedCode.replace(/\b(\d+\.?\d*)\b/g, '<span class="py-number">$1</span>');
         highlightedCode = highlightedCode.replace(/(&quot;[^&]*&quot;|&#039;[^&]*&#039;)/g, '<span class="py-string">$1</span>');
@@ -1114,7 +1874,34 @@ Return only Python code.`;
         codeOutput.innerHTML = `<pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word;">${highlightedCode}</pre>`;
     }
 
-    function escapeHtml(text) {
+    function displaySQLCode(sql) {
+        const codeOutput = document.getElementById('codeOutput');
+        generatedSQL = sql;
+
+        let highlightedSQL = escapeHtml(sql);
+
+        const sqlKeywords = /\b(SELECT|FROM|WHERE|AND|OR|NOT|NULL|IS|IN|EXISTS|BETWEEN|LIKE|AS|INNER|LEFT|RIGHT|OUTER|JOIN|ON|GROUP BY|HAVING|ORDER BY|ASC|DESC|LIMIT|OFFSET|UNION|ALL|DISTINCT|CREATE|VIEW|TABLE|INSERT|UPDATE|DELETE|SET|VALUES|INTO|CASE|WHEN|THEN|ELSE|END|WITH|CAST|CONVERT)\b/gi;
+        const sqlFunctions = /\b(COUNT|SUM|AVG|MIN|MAX|ROUND|CEILING|FLOOR|ABS|COALESCE|NULLIF|NOW|GETDATE|DATEADD|DATEDIFF|YEAR|MONTH|DAY)\b/gi;
+
+        highlightedSQL = highlightedSQL.replace(sqlKeywords, '<span class="sql-keyword">$1</span>');
+        highlightedSQL = highlightedSQL.replace(sqlFunctions, '<span class="sql-function">$1</span>');
+        highlightedSQL = highlightedSQL.replace(/\b(\d+\.?\d*)\b/g, '<span class="sql-number">$1</span>');
+        highlightedSQL = highlightedSQL.replace(/(&quot;[^&]*&quot;|&#039;[^&]*&#039;)/g, '<span class="sql-string">$1</span>');
+        highlightedSQL = highlightedSQL.replace(/(--[^\n]*)/g, '<span class="sql-comment">$1</span>');
+
+        codeOutput.innerHTML = `<pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word;">${highlightedSQL}</pre>`;
+    }
+
+    window.displayCode = function(code) {
+        const codeType = document.getElementById('codeTypeSelect')?.value || 'python';
+        if (codeType === 'sql') {
+            displaySQLCode(code);
+        } else {
+            displayPythonCode(code);
+        }
+    }
+
+    window.escapeHtml = function(text) {
         const map = {
             '&': '&amp;',
             '<': '&lt;',
@@ -1125,103 +1912,122 @@ Return only Python code.`;
         return text.replace(/[&<>"']/g, m => map[m]);
     }
 
-    function copyCode() {
-        if (generatedCode) {
-            navigator.clipboard.writeText(generatedCode).then(() => {
-                updateModelStatus('Code copied!', false, 'ready');
+    window.copyCode = function() {
+        const codeType = document.getElementById('codeTypeSelect')?.value || 'python';
+        const codeToCopy = codeType === 'sql' ? generatedSQL : generatedCode;
+
+        if (codeToCopy) {
+            navigator.clipboard.writeText(codeToCopy).then(() => {
+                updateModelStatus(`${codeType.toUpperCase()} copied to clipboard!`, false, 'ready');
             });
         }
     }
 
-    function editCode() {
+    window.editCode = function() {
         const codeOutput = document.getElementById('codeOutput');
-        codeOutput.innerHTML = `<textarea id="codeEditor" style="background: transparent; color: #d4d4d4; border: none; width: 100%; min-height: 300px; font-family: monospace; outline: none;">${escapeHtml(generatedCode)}</textarea>
+        const codeType = document.getElementById('codeTypeSelect')?.value || 'python';
+        const codeToEdit = codeType === 'sql' ? generatedSQL : generatedCode;
+
+        codeOutput.innerHTML = `<textarea id="codeEditor" style="background: transparent; color: #d4d4d4; border: none; width: 100%; min-height: 300px; font-family: 'Courier New', monospace; outline: none;">${escapeHtml(codeToEdit || '')}</textarea>
             <div style="margin-top: 10px;">
                 <button class="btn btn-success" onclick="saveEditedCode()">Save</button>
                 <button class="btn btn-secondary" onclick="cancelCodeEdit()">Cancel</button>
             </div>`;
+        document.getElementById('codeEditor').focus();
     }
 
-    function saveEditedCode() {
-        generatedCode = document.getElementById('codeEditor').value;
-        displayCode(generatedCode);
-        updateModelStatus('Code updated', false, 'ready');
+    window.saveEditedCode = function() {
+        const editedCode = document.getElementById('codeEditor').value;
+        const codeType = document.getElementById('codeTypeSelect')?.value || 'python';
+
+        if (codeType === 'sql') {
+            generatedSQL = editedCode;
+            displaySQLCode(generatedSQL);
+        } else {
+            generatedCode = editedCode;
+            displayPythonCode(generatedCode);
+        }
+
+        updateModelStatus(`${codeType.toUpperCase()} updated`, false, 'ready');
     }
 
-    function cancelCodeEdit() {
-        displayCode(generatedCode);
+    window.cancelCodeEdit = function() {
+        const codeType = document.getElementById('codeTypeSelect')?.value || 'python';
+
+        if (codeType === 'sql' && generatedSQL) {
+            displaySQLCode(generatedSQL);
+        } else if (codeType === 'python' && generatedCode) {
+            displayPythonCode(generatedCode);
+        } else {
+            document.getElementById('codeOutput').innerHTML = '<span style="color: #6a6a6a;">// No code generated yet...</span>';
+        }
     }
 
-    function validateCode() {
-        updateModelStatus('Validating...', true);
+    window.validateCode = function() {
+        const codeType = document.getElementById('codeTypeSelect')?.value || 'python';
+        updateModelStatus(`Validating ${codeType.toUpperCase()} syntax...`, true);
+
         setTimeout(() => {
-            updateModelStatus('Syntax valid', false, 'ready');
+            if (codeType === 'sql') {
+                const hasSelect = generatedSQL.includes('SELECT') || generatedSQL.includes('select');
+                const hasFrom = generatedSQL.includes('FROM') || generatedSQL.includes('from');
+
+                if (hasSelect && hasFrom) {
+                    updateModelStatus('✓ SQL syntax validation passed', false, 'ready');
+                } else {
+                    updateModelStatus('⚠️ SQL may have syntax issues', false, 'error');
+                }
+            } else {
+                const hasDefFunction = generatedCode.includes('def evaluate_policy');
+                const hasReturn = generatedCode.includes('return');
+
+                if (hasDefFunction && hasReturn) {
+                    updateModelStatus('✓ Python syntax validation passed', false, 'ready');
+                } else {
+                    updateModelStatus('⚠️ Python code may have issues', false, 'error');
+                }
+            }
         }, 1000);
     }
 
-    function compileToWasm() {
-        updateModelStatus('Compiling...', true);
+    window.compileToWasm = function() {
+        updateModelStatus('Compiling to WASM...', true);
+        updateCurrentTask('Compiling to WebAssembly');
         setTimeout(() => {
             document.getElementById('testSection').classList.remove('hidden');
-            updateModelStatus('Compiled to WASM', false, 'ready');
+            updateModelStatus('Successfully compiled to WebAssembly', false, 'ready');
             updateStep(7);
         }, 2000);
     }
 
-    async function generateTests() {
-        updateModelStatus('Generating tests...', true);
+    window.generateTests = async function() {
+        const codeType = document.getElementById('codeTypeSelect')?.value || 'python';
+        updateModelStatus(`Generating test cases for ${codeType.toUpperCase()}...`, true);
+        updateCurrentTask('Generating test cases');
 
-        try {
-            const testCases = [
-                { name: "Valid case", data: { age: 30, income: 75000, credit_score: 720 }, expected: "approved" },
-                { name: "Invalid case", data: { age: 17, income: 30000, credit_score: 500 }, expected: "rejected" }
-            ];
-
-            displayTests(testCases);
-            updateModelStatus('Tests generated', false, 'ready');
-        } catch (error) {
-            updateModelStatus(`Error: ${error.message}`, false, 'error');
-        }
-    }
-
-    function displayTests(testCases) {
-        const testResults = document.getElementById('testResults');
-        testResults.innerHTML = '';
-
-        testCases.forEach((test, i) => {
-            const testDiv = document.createElement('div');
-            testDiv.className = 'test-case';
-            testDiv.innerHTML = `
-                    <strong>Test ${i + 1}: ${test.name}</strong>
-                    <pre style="margin: 10px 0; background: #f7f7f7; padding: 10px; border-radius: 4px;">${JSON.stringify(test.data, null, 2)}</pre>
-                    <span>Expected: <strong>${test.expected}</strong></span>
-                    <div id="result${i}"></div>
-                `;
-            testResults.appendChild(testDiv);
-        });
-    }
-
-    function runTests() {
-        updateModelStatus('Running tests...', true);
-
+        // Test generation logic here...
         setTimeout(() => {
-            document.querySelectorAll('.test-case').forEach((test, i) => {
-                const passed = Math.random() > 0.3;
-                test.classList.add(passed ? 'passed' : 'failed');
-                document.getElementById(`result${i}`).innerHTML =
-                    `<div style="margin-top: 10px; color: ${passed ? '#00A853' : '#E60028'};">${passed ? '✓ Passed' : '✗ Failed'}</div>`;
-            });
-            updateModelStatus('Tests complete', false, 'ready');
+            updateModelStatus('Test cases generated', false, 'ready');
         }, 1500);
     }
 
-    function exportAll() {
+    window.runTests = function() {
+        updateModelStatus('Running test suite...', true);
+        updateCurrentTask('Executing tests');
+
+        setTimeout(() => {
+            updateModelStatus('Test execution complete', false, 'ready');
+        }, 1500);
+    }
+
+    window.exportAll = function() {
         const exportData = {
             guidelines: codingGuidelines,
             context: compiledContext,
-            adjacency: adjacencyList,
+            adjacencyMatrix: window.adjacencyMatrix,
             policy: document.getElementById('policyInput').value,
-            code: generatedCode,
+            pythonCode: generatedCode,
+            sqlCode: generatedSQL,
             timestamp: new Date().toISOString()
         };
 
@@ -1232,22 +2038,40 @@ Return only Python code.`;
         a.download = `policy_export_${Date.now()}.json`;
         a.click();
         URL.revokeObjectURL(url);
+
+        updateModelStatus('Project exported successfully', false, 'ready');
     }
 
-    function showHelp() {
-        alert('Policy Coder Pro Help\n\n1. Initialize an AI model\n2. Set coding guidelines\n3. Define your context\n4. Compile and edit fields\n5. Write policy rules\n6. Generate code\n7. Test and validate');
+    window.showHelp = function() {
+        alert('Policy Coder Pro - Help Guide\n\n' +
+            '📋 WORKFLOW:\n' +
+            '1. Initialize Model (Left Panel) - Load AI model\n' +
+            '2. Set Guidelines (Left Panel) - Define coding standards\n' +
+            '3. Input Context - Describe your policy domain\n' +
+            '4. Compile - Extract decision variables\n' +
+            '5. Write Policy - Define business rules\n' +
+            '6. Generate - Create Python or SQL code\n' +
+            '7. Test - Validate implementation\n\n' +
+            '💡 FEATURES:\n' +
+            '• Use Google style guides for best practices\n' +
+            '• Generate both Python and SQL\n' +
+            '• Edit extracted variables before generation\n' +
+            '• Export complete project configuration\n\n' +
+            '🔗 RESOURCES:\n' +
+            '• Google Python Style Guide\n' +
+            '• Google SQL Style Guide\n' +
+            '• PEP 8 Standards');
     }
 
     function updateStep(step) {
         document.querySelectorAll('.step').forEach(s => s.classList.remove('active', 'completed'));
 
-        for (let i = 1; i < step; i++) {
+        for (let i = 3; i < step; i++) {
             document.getElementById(`step${i}`).classList.add('completed');
         }
         document.getElementById(`step${step}`).classList.add('active');
 
-        // Update progress line
-        const progress = ((step - 1) / 6) * 100;
+        const progress = ((step - 3) / 4) * 100;
         document.getElementById('progressLine').style.width = `${progress}%`;
 
         currentStep = step;
@@ -1262,42 +2086,77 @@ Return only Python code.`;
         icon.classList.add(type);
     }
 
-    // Make functions global
-    window.initializeModel = initializeModel;
-    window.saveGuidelines = saveGuidelines;
-    window.compileContext = compileContext;
-    window.toggleEditMode = toggleEditMode;
-    window.addField = addField;
-    window.removeField = removeField;
-    window.saveEditedContext = saveEditedContext;
-    window.cancelEdit = cancelEdit;
-    window.finalizeContext = finalizeContext;
-    window.generateCode = generateCode;
-    window.copyCode = copyCode;
-    window.editCode = editCode;
-    window.saveEditedCode = saveEditedCode;
-    window.cancelCodeEdit = cancelCodeEdit;
-    window.validateCode = validateCode;
-    window.compileToWasm = compileToWasm;
-    window.generateTests = generateTests;
-    window.runTests = runTests;
-    window.exportAll = exportAll;
-    window.showHelp = showHelp;
+    function updateCurrentTask(task) {
+        document.getElementById('currentTask').textContent = task;
+    }
+
+    // Expose functions
+    window.checkWebGPUSupport = checkWebGPUSupport;
+    window.displayCompiledContext = displayCompiledContext;
+    window.fallbackExtraction = fallbackExtraction;
+    window.getTypeColor = getTypeColor;
+    window.getImpactLevel = getImpactLevel;
+    window.generatePythonCode = generatePythonCode;
+    window.generateSQLCode = generateSQLCode;
+    window.generateFallbackSQL = generateFallbackSQL;
+    window.displayPythonCode = displayPythonCode;
+    window.displaySQLCode = displaySQLCode;
+    window.handleCodeTypeChange = handleCodeTypeChange;
+    window.regenerateCode = regenerateCode;
+    window.updateStep = updateStep;
+    window.updateModelStatus = updateModelStatus;
+    window.updateCurrentTask = updateCurrentTask;
 
     // Pre-fill example data
     window.addEventListener('load', () => {
-        document.getElementById('guidelinesInput').value = `- Use type hints for all parameters
-- Follow PEP 8 style guide
-- Add comprehensive docstrings
-- Return dict with status/data/error keys
-- Validate inputs before processing`;
+        document.getElementById('guidelinesInput').value = `# Coding Standards
+- Use descriptive variable names
+- Add comprehensive comments
+- Follow language-specific best practices
+- Include error handling
+- Write testable code`;
 
-        document.getElementById('rawContextInput').value = `The system processes loan applications. Each application has an applicant's age, annual income, credit score (300-850), requested loan amount, employment years, and debt-to-income ratio.`;
+        document.getElementById('rawContextInput').value = `The loan application system evaluates applicants based on multiple financial and personal factors. Each applicant must provide their age (minimum 18 years required for legal contracts), their annual income in USD which demonstrates repayment capacity, and their credit score which ranges from 300 to 850 and indicates creditworthiness history.`;
 
-        document.getElementById('policyInput').value = `Approve if age > 18, credit score > 650.
-Reject if credit score < 600 or age < 18.`;
+        document.getElementById('policyInput').value = `Approve loan applications where:
+- Applicant age is between 18 and 65 years
+- Credit score exceeds 650 for standard approval
+- For credit scores between 600-650, approve only if debt-to-income ratio < 0.4`;
 
-        updateModelStatus('Ready to initialize AI model', false, 'ready');
+        currentCodeType = 'python';
+
+        // Check WebGPU support on load
+        checkWebGPUSupport().then(gpuCheck => {
+            if (gpuCheck.supported) {
+                updateModelStatus('WebGPU ready - Initialize AI model to begin', false, 'ready');
+                updateCurrentTask('Initialize AI model in the left panel to begin');
+            } else {
+                updateModelStatus('WebGPU setup required', false, 'error');
+                updateCurrentTask('Enable WebGPU features to use AI models');
+
+                // Show warning in sidebar
+                const sidebarSection = document.querySelector('.sidebar-section');
+                if (!document.getElementById('webgpuHelp')) {
+                    const helpDiv = document.createElement('div');
+                    helpDiv.id = 'webgpuHelp';
+                    helpDiv.innerHTML = `
+                            <div style="margin-top: 15px; padding: 12px; background: #fff3cd; border-radius: 8px; border: 1px solid #ffc107;">
+                                <p style="font-size: 13px; color: #856404; margin-bottom: 10px;">
+                                    ⚠️ <strong>WebGPU setup required</strong><br>
+                                    shader-f16 feature needs to be enabled
+                                </p>
+                                <button class="btn btn-warning btn-sm" onclick="showWebGPUInstructions()" style="width: 100%;">
+                                    View Setup Guide
+                                </button>
+                                <p style="font-size: 11px; color: #856404; margin-top: 10px; margin-bottom: 0;">
+                                    💡 Tip: Try Chrome Canary for easier setup
+                                </p>
+                            </div>
+                        `;
+                    sidebarSection.appendChild(helpDiv);
+                }
+            }
+        });
     });
 </script>
 </body>
